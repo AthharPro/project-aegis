@@ -8,10 +8,14 @@ import '../../data/local/hive_service.dart';
 import '../../data/models/incident_model.dart';
 import '../../data/sync_service.dart';
 import '../widgets/offline_status_banner.dart';
-import 'pending_reports_screen.dart';
+import 'sync_status_screen.dart';
 import 'local_data_screen.dart';
 import 'login_screen.dart';
 import '../../data/remote/supabase_service.dart';
+import '../widgets/incident_type_page.dart';
+import '../widgets/severity_page.dart';
+import '../widgets/victim_count_page.dart';
+import '../widgets/summary_page.dart';
 
 class IncidentFormScreen extends StatefulWidget {
   const IncidentFormScreen({super.key});
@@ -25,10 +29,12 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
   final _networkUtils = GetIt.I<NetworkUtils>();
   final _syncService = GetIt.I<SyncService>();
   final _supabaseService = GetIt.I<SupabaseService>();
+  final PageController _pageController = PageController();
 
-  IncidentType _selectedType = IncidentType.landslide;
-  int _severity = 1;
-  int? _victimCount;
+  int _currentPage = 0;
+  IncidentType? _selectedType;
+  int _severity = 3; // Default to moderate
+  String _victimCountInput = '';
   bool _isLoading = false;
   bool _isConnected = true;
 
@@ -39,12 +45,12 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     
-    // 1. Start Live Location Tracking (Non-blocking)
+    // Start Live Location Tracking (Non-blocking)
     if (!kIsWeb) {
       Geolocator.getPositionStream(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.medium,
-          distanceFilter: 10, // Update every 10 meters
+          distanceFilter: 10,
         ),
       ).listen((position) {
         if (mounted) _lastPosition = position;
@@ -54,7 +60,6 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
     _networkUtils.connectionStream.listen((connected) {
       if (mounted) setState(() => _isConnected = connected);
       if (connected) {
-        // Sync immediately when connected
         _syncService.syncPendingIncidents();
       }
     });
@@ -65,13 +70,13 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _pageController.dispose();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      // Trigger sync when app comes to foreground
       if (_isConnected) {
         _syncService.syncPendingIncidents();
       }
@@ -96,14 +101,36 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
     }
   }
 
+  void _nextPage() {
+    if (_currentPage < 3) {
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  void _previousPage() {
+    if (_currentPage > 0) {
+      _pageController.previousPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  void _goToPage(int page) {
+    _pageController.animateToPage(
+      page,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
   Future<void> _submitReport() async {
-    // 1. Immediate UI Feedback
     setState(() => _isLoading = true);
 
     try {
-      // 2. ZERO-DELAY LOCATION STRATEGY
-      // Use the cached live position. If null, try last known. If that's null, default to 0,0.
-      
       Position? finalPosition = _lastPosition;
       if (finalPosition == null && !kIsWeb) {
         finalPosition = await Geolocator.getLastKnownPosition();
@@ -111,17 +138,16 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
       
       final incident = IncidentModel(
         id: const Uuid().v4(),
-        type: _selectedType,
+        type: _selectedType!,
         severity: _severity,
         latitude: finalPosition?.latitude ?? 0.0,
         longitude: finalPosition?.longitude ?? 0.0,
         createdAt: DateTime.now(),
         synced: false,
         userId: _supabaseService.currentUser?.id ?? '',
-        victimCount: _victimCount,
+        victimCount: _victimCountInput.isNotEmpty ? int.tryParse(_victimCountInput) : null,
       );
 
-      // 3. INSTANT LOCAL SAVE
       await _hiveService.saveIncident(incident);
 
       if (mounted) {
@@ -133,15 +159,16 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
           ),
         );
         
-        // Reset form immediately
+        // Reset form
         setState(() {
-          _severity = 1;
-          _selectedType = IncidentType.landslide;
-          _victimCount = null;
+          _severity = 3;
+          _selectedType = null;
+          _victimCountInput = '';
+          _currentPage = 0;
         });
+        _pageController.jumpToPage(0);
       }
 
-      // 4. BACKGROUND SYNC TRIGGER
       if (_isConnected) {
          _syncService.syncPendingIncidents();
       }
@@ -151,6 +178,25 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
     }
   }
 
+  Widget _buildPageIndicator() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(4, (index) {
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: _currentPage == index
+                ? Theme.of(context).colorScheme.secondary
+                : Colors.grey[300],
+          ),
+        );
+      }),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -158,9 +204,10 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
         title: const Text('New Incident'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.history),
+            icon: const Icon(Icons.cloud_sync),
+            tooltip: 'Sync Status',
             onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const PendingReportsScreen()),
+              MaterialPageRoute(builder: (_) => const SyncStatusScreen()),
             ),
           ),
           IconButton(
@@ -186,87 +233,69 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
       body: Column(
         children: [
           OfflineStatusBanner(isConnected: _isConnected),
+          
+          // Page Indicator
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: _buildPageIndicator(),
+          ),
+          
+          // Page View
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Incident Type', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  DropdownButtonFormField<IncidentType>(
-                    value: _selectedType,
-                    items: IncidentType.values.map((type) {
-                      String label;
-                      switch (type) {
-                        case IncidentType.landslide: label = 'Landslide'; break;
-                        case IncidentType.flood: label = 'Flood'; break;
-                        case IncidentType.roadBlock: label = 'Road Block'; break;
-                        case IncidentType.powerLineDown: label = 'Power Line Down'; break;
-                      }
-                      return DropdownMenuItem(
-                        value: type,
-                        child: Text(label),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) setState(() => _selectedType = val);
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  
-                  const Text('Severity (1-5)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  Slider(
-                    value: _severity.toDouble(),
-                    min: 1,
-                    max: 5,
-                    divisions: 4,
-                    label: _severity.toString(),
-                    onChanged: (val) => setState(() => _severity = val.toInt()),
-                  ),
-
-                  const SizedBox(height: 24),
-                  
-                  const Text('Victim Count (Optional)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  TextFormField(
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      hintText: 'Enter number of victims',
-                      prefixIcon: Icon(Icons.people),
-                    ),
-                    onChanged: (val) => setState(() => _victimCount = int.tryParse(val)),
-                  ),
-
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _isLoading ? null : _submitReport,
-                      icon: const Icon(Icons.send),
-                      label: _isLoading 
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text('SUBMIT REPORT'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _isConnected ? Colors.red : Colors.orange,
-                        padding: const EdgeInsets.all(20),
-                      ),
-                    ),
-                  ),
-                  if (!_isConnected)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 8.0),
-                      child: Center(
-                        child: Text(
-                          'Will sync automatically when online',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+            child: PageView(
+              controller: _pageController,
+              physics: const NeverScrollableScrollPhysics(),
+              onPageChanged: (page) {
+                setState(() => _currentPage = page);
+              },
+              children: [
+                IncidentTypePage(
+                  selectedType: _selectedType,
+                  onTypeSelected: (type) {
+                    setState(() => _selectedType = type);
+                    Future.delayed(const Duration(milliseconds: 300), () {
+                      _nextPage();
+                    });
+                  },
+                ),
+                SeverityPage(
+                  severity: _severity,
+                  onSeveritySelected: (level) {
+                    setState(() => _severity = level);
+                    Future.delayed(const Duration(milliseconds: 300), () {
+                      _nextPage();
+                    });
+                  },
+                  onBack: _previousPage,
+                ),
+                VictimCountPage(
+                  victimCountInput: _victimCountInput,
+                  onVictimCountSelected: (value) {
+                    setState(() => _victimCountInput = value);
+                    Future.delayed(const Duration(milliseconds: 300), () {
+                      _nextPage();
+                    });
+                  },
+                  onBack: _previousPage,
+                ),
+                SummaryPage(
+                  selectedType: _selectedType,
+                  severity: _severity,
+                  victimCountInput: _victimCountInput,
+                  isLoading: _isLoading,
+                  isConnected: _isConnected,
+                  onSubmit: _submitReport,
+                  onEditType: () => _goToPage(0),
+                  onEditSeverity: () => _goToPage(1),
+                  onEditVictimCount: () => _goToPage(2),
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
   }
+
+
 }
