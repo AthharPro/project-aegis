@@ -1,14 +1,12 @@
 // lib/pages/login_page.dart
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import '../widgets/button.dart';
 import '../widgets/input_field.dart';
 import '../utils.dart';
-import '../api/api_service.dart';
-import '../db/secure_storage.dart';
+import '../api/auth_service.dart';
 import '../db/hive_db.dart';
 import '../db/models.dart';
+import 'register_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -57,21 +55,15 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 const SizedBox(height: 30),
-                
+
                 const Text(
                   'Disaster Relief',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 const Text(
                   'Field Reporting System',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
-                  ),
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
                 ),
                 const SizedBox(height: 40),
 
@@ -116,34 +108,30 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 20),
 
-                // Test info
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'For Testing:',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 5),
-                        const Text(
-                          'Email: test@example.com\nPassword: password123',
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                        const SizedBox(height: 5),
-                        TextButton(
-                          onPressed: () {
-                            _emailController.text = 'test@example.com';
-                            _passwordController.text = 'password123';
-                          },
-                          child: const Text('Fill Test Data'),
-                        ),
-                      ],
+                // Register link
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Don\'t have an account? ',
+                      style: TextStyle(color: Colors.grey[600]),
                     ),
-                  ),
+                    TextButton(
+                      onPressed: _isLoading
+                          ? null
+                          : () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const RegisterPage(),
+                                ),
+                              );
+                            },
+                      child: const Text('Register'),
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 20),
               ],
             ),
           ),
@@ -155,35 +143,42 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      
-      final result = await ApiService.login(
-        _emailController.text.trim(),
-        _passwordController.text,
+
+      // Try Supabase auth first
+      final result = await AuthService.login(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
       );
-      
+
       setState(() => _isLoading = false);
-      
-      if (result['success'] == true) {
-        final data = result['data'];
-        
-        // Save tokens
-        await SecureStorage.saveLoginData(
-          token: data['system_token'],
-          refreshToken: data['refresh_token'],
-          userData: jsonEncode(data['user_profile']),
-        );
-        
-        // Save user to Hive
-        final user = User.fromJson(data['user_profile']);
-        await HiveDB.saveUser(user);
-        
+
+      if (result['success']) {
+        // Fetch user profile
+        final profile = await AuthService.getCurrentUserProfile();
+
+        // Save to Hive
+        if (profile != null) {
+          await HiveDB.saveUser(
+            User(
+              id: profile['id'],
+              email: _emailController.text.trim(),
+              name: profile['full_name'],
+              role: profile['role'],
+            ),
+          );
+        }
+
         // Show success
         showSnackbar(context, 'Login successful');
-        
+
         // Navigate to home
         Navigator.pushReplacementNamed(context, '/home');
       } else {
-        showSnackbar(context, result['message'] ?? 'Login failed', isError: true);
+        showSnackbar(
+          context,
+          result['message'] ?? 'Login failed',
+          isError: true,
+        );
       }
     }
   }
