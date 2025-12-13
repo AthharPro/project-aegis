@@ -1,4 +1,4 @@
-import { formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
 
 // 1. SEVERITY (Input - The Situation)
 export const getSeverityConfig = (severity: number) => {
@@ -19,6 +19,18 @@ export const getStatusConfig = (status: string) => {
   }
 };
 
-export const formatTimestamp = (timestamp: string) => {
-  return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
+export const formatTimestamp = (timestamp: string): string => {
+  const date = new Date(timestamp);
+  
+  // 1. Get the components in UTC
+  const utcHours = date.getUTCHours();
+  const utcMinutes = date.getUTCMinutes();
+  
+  // 2. Reconstruct a string formatted for display
+  const hours12 = utcHours % 12 || 12;
+  const ampm = utcHours < 12 ? 'AM' : 'PM';
+  const minutesPadded = String(utcMinutes).padStart(2, '0');
+  
+  // Final display string
+  return `${hours12}:${minutesPadded} ${ampm}`;
 };

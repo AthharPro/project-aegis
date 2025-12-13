@@ -1,16 +1,16 @@
 import React from 'react';
 import { Activity, Wifi, WifiOff, Users, AlertTriangle, ShieldAlert } from 'lucide-react';
-import { useIncidents } from '../hooks/UseVictim'; // Updated Hook
+import { useIncidents } from '../hooks/UseVictim'; 
 import { StatCard } from '../components/StatCard';
-import { IncidentRow } from '../components/VictimRow'; // Updated Component
+import { IncidentRow } from '../components/VictimRow'; 
 import { MapView } from '../components/MapView';
 
 const Dashboard: React.FC = () => {
-  const { incidents, isConnected, isLoading, updateStatus } = useIncidents();
+  const { incidents, isConnected, isLoading, updateStatus, completedIncidents } = useIncidents();
 
   // --- Real-time Stats Calculation ---
   const stats = {
-    totalReports: incidents.length,
+    totalReports: incidents.length + completedIncidents.length,
     
     // Count "Critical" or "High" severity (Level 4 & 5)
     criticalIncidents: incidents.filter(i => i.severity >= 4).length,

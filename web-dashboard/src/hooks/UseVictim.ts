@@ -84,8 +84,6 @@ export const useIncidents = () => {
             setIncidents((prev) => [incidentWithProfile as Incident, ...prev]);
 
           } else if (payload.eventType === 'UPDATE') {
-            // Status update happened!
-            // We merge payload.new into the existing item to keep the profile data intact
             setIncidents((prev) => prev.map(i => i.id === payload.new.id ? { ...i, ...payload.new } : i));
           }
         }

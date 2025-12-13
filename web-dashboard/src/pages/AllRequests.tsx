@@ -62,7 +62,7 @@ const AllRequests: React.FC = () => {
   return (
     <div className="flex h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
+        {/* Header (unchanged) */}
         <div className="bg-slate-900 border-b border-slate-800 px-6 py-4 flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Mission Logs</h1>
@@ -74,7 +74,7 @@ const AllRequests: React.FC = () => {
         </div>
 
         <div className="flex-1 overflow-auto p-6 space-y-6">
-          {/* --- FILTERS BAR --- */}
+
           <div className="bg-slate-900/50 border border-slate-800 p-4 rounded-lg flex flex-col md:flex-row gap-4 items-center justify-between backdrop-blur-sm">
             {/* Left: Search */}
             <div className="relative w-full md:w-96">
@@ -106,16 +106,16 @@ const AllRequests: React.FC = () => {
               </div>
             </div>
           </div>
-
           {/* --- TABLE CONTENT --- */}
           <div className="bg-slate-900/50 border border-slate-800 rounded-lg overflow-hidden flex flex-col min-h-[600px]">
-            {/* Table Header */}
+            {/* Table Header: TOTAL 12 COLUMNS */}
             <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-800 bg-slate-900/80 text-xs font-bold text-slate-500 uppercase tracking-wider">
-              <div className="col-span-3">Incident Type</div>
-              <div className="col-span-2">Severity</div>
-              <div className="col-span-2">HQ Status</div>
-              <div className="col-span-3">Location</div>
-              <div className="col-span-2 text-right">Officer / Time</div>
+              <div className="col-span-3">Incident Type</div>       {/* 3 */}
+              <div className="col-span-1">Severity</div>          {/* 1 */}
+              <div className="col-span-2">HQ Status</div>           {/* 2 */}
+              <div className="col-span-3">Location</div>            {/* 3 */}
+              <div className="col-span-1 text-center">Victims</div> {/* 1 */}
+              <div className="col-span-2 text-right">Responder / Time</div> {/* 2 */}
             </div>
 
             {/* Table Rows */}
@@ -134,73 +134,67 @@ const AllRequests: React.FC = () => {
                       key={incident.id}
                       className="grid grid-cols-12 gap-4 p-4 border-b border-slate-800/50 hover:bg-slate-800/50 transition-colors items-center text-sm group"
                     >
-                      {/* Incident Type */}
+                      {/* Incident Type (col-span-3) */}
                       <div className="col-span-3 font-medium text-slate-200 flex items-center gap-3">
                         <div className={`w-2 h-2 rounded-full ${severityConfig.bg.replace('/20', '')} shadow-[0_0_8px_rgba(255,255,255,0.2)]`}></div>
                         <div className="flex flex-col">
                           <span>{incident.incident_type}</span>
-                          {incident.victim_count > 0 && (
-                            <span className="text-[10px] text-slate-500">{incident.victim_count} Victims</span>
-                          )}
                         </div>
                       </div>
 
-                      {/* Severity Badge */}
-                      <div className="col-span-2">
+                      {/* Severity Badge (col-span-1) */}
+                      <div className="col-span-1">
                         <span className={`px-2 py-1 rounded border text-[10px] font-bold ${severityConfig.color} ${severityConfig.bg} ${severityConfig.border}`}>
                           {severityConfig.label}
                         </span>
                       </div>
 
-                      {/* Status Badge */}
+                      {/* Status Badge & Action Button (col-span-2) */}
                       <div className="col-span-2">
-                        <div className="row-span-2 flex flex-row gap-2">
+                        <div className="flex flex-row gap-2 items-center">
+                          {/* Status Badge */}
                           <span className={`flex items-center gap-1.5 w-fit px-2 py-1 rounded text-[10px] font-bold ${statusConfig.color} ${statusConfig.bg}`}>
                             {incident.status === 'PENDING' && <AlertCircle size={10} />}
                             {statusConfig.label.toUpperCase()}
                           </span>
 
-                          {/* Status Change / Action Button */}
-
+                          {/* Action Button Logic */}
                           {confirmingId === incident.id ? (
-                            // --- CONFIRMATION STATE ---
+                            // --- CONFIRMATION STATE (YES/NO BUTTONS) ---
                             <div className="flex items-center gap-2">
-
-
-                              {/* CONFIRM (RIGHT/YES) Button */}
+                              {/* CONFIRM Button */}
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleResolve(incident.id); // Proceed with the update
+                                  handleResolve(incident.id);
                                 }}
-                                // Use flex, justify-center, and items-center on the button itself
-                                className="w-12 p-1 rounded-sm bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-sm flex items-center justify-center"
+                                className="w-8 h-8 p-1 rounded-sm bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-sm flex items-center justify-center"
                               >
-                                {/* The icon now just needs to be rendered, the parent centers it */}
                                 <Check size={14} />
                               </button>
 
-                              {/* CANCEL (WRONG/NO) Button */}
+                              {/* CANCEL Button */}
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  setConfirmingId(null); // Clear confirmation state
+                                  setConfirmingId(null);
                                 }}
-                                className="w-12 p-1 rounded-sm bg-red-600 hover:bg-red-700 text-white transition-colors shadow-sm flex items-center justify-center"
+                                className="w-8 h-8 p-1 rounded-sm bg-red-600 hover:bg-red-700 text-white transition-colors shadow-sm flex items-center justify-center"
                               >
-                                <X size={14} /> {/* Wrong/X Icon */}
+                                <X size={14} />
                               </button>
                             </div>
 
                           ) : incident.status.toUpperCase() === 'RESOLVED' ? (
-                            " "
+                            // Show nothing/space while the timer runs
+                            <div className="w-12 h-8"></div>
 
                           ) : (
-                            // --- INITIAL Active State (Show MARK RESOLVED button) ---
+                            // --- INITIAL Active State ---
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setConfirmingId(incident.id); // Set ID to enter confirmation mode
+                                setConfirmingId(incident.id);
                               }}
                               className="flex items-center gap-1.5 w-fit px-3 py-1.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-600 hover:bg-emerald-600 hover:text-white hover:border-emerald-500 transition-all shadow-sm"
                             >
@@ -211,19 +205,26 @@ const AllRequests: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Location */}
+                      {/* Location (col-span-3) */}
                       <div className="col-span-3 text-slate-400 font-mono text-xs flex items-center gap-2">
                         <MapPin className="w-3 h-3 text-slate-600" />
                         {incident.latitude.toFixed(4)}, {incident.longitude.toFixed(4)}
                       </div>
 
-                      {/* Officer & Time */}
+                      {/* Victim Count (col-span-1) */}
+                      <div className="col-span-1 text-slate-400 font-mono text-xs flex justify-center items-center">
+                        <span className="text-sm font-bold text-slate-300">
+                          {incident.victim_count}
+                        </span>
+                      </div>
+
+                      {/* Officer & Time (col-span-2) */}
                       <div className="col-span-2 text-right flex flex-col items-end gap-1">
                         <div className="text-slate-300 flex items-center gap-1.5" title={incident.user_id}>
-                          <span className="truncate max-w-[100px]">{incident.profiles?.full_name || 'Unknown'}</span>
+                          <span className="w-[120px] truncate">{incident.profiles?.full_name || 'Unknown'}</span>
                           <User className="w-3 h-3 text-slate-600" />
                         </div>
-                        <div className="text-slate-500 font-mono text-[10px] flex items-center gap-1">
+                        <div className="text-slate-500 font-mono text-[14px] flex items-center gap-1">
                           {formatTimestamp(incident.incident_time)}
                           <Clock className="w-3 h-3" />
                         </div>
