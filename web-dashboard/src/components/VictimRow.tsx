@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, Clock, User, ShieldAlert, Radio } from 'lucide-react';
+import { MapPin, Clock, Radio } from 'lucide-react';
 import type { Incident, IncidentStatus } from '../types';
 import { getSeverityConfig, getStatusConfig, formatTimestamp } from '../utils/helper';
 

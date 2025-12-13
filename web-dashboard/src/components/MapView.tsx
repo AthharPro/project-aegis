@@ -4,7 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import type { Incident } from '../types';
 import { formatDistanceToNow } from 'date-fns';
-import { getSeverityConfig } from '../utils/helper';
+//import { getSeverityConfig } from '../utils/helper';
 
 // --- Icon Factory ---
 const createIcon = (color: string) => new L.DivIcon({
@@ -47,7 +47,7 @@ export const MapView: React.FC<{ incidents: Incident[] }> = ({ incidents }) => {
 
         {/* Render Markers */}
         {incidents.map((incident) => {
-          const config = getSeverityConfig(incident.severity);
+          //const config = getSeverityConfig(incident.severity);
           
           return (
             <Marker 
