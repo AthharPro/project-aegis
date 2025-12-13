@@ -69,7 +69,7 @@ export const useIncidentsPaginated = ({ page, pageSize, searchTerm = '', severit
   useEffect(() => {
     const channel = supabase
       .channel('realtime-incidents-paginated')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'incident_reports' }, async (payload) => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'incident_reports' }, async () => {
         // For simplicity: refetch the current page on any change
         fetchPage();
       })

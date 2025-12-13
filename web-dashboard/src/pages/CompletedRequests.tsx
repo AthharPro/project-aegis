@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Pagination, ConfigProvider, theme } from 'antd';
-import { Search, Filter, MapPin, User, AlertCircle, Clock, Check, X } from 'lucide-react';
+import { Search, Filter, MapPin, User, AlertCircle, Clock} from 'lucide-react';
 import { useIncidents } from '../hooks/UseVictim';
 import { getSeverityConfig, getStatusConfig, formatTimestamp, formatVictimCount } from '../utils/helper';
 import type { Incident } from '../types';

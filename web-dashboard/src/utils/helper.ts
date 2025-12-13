@@ -1,4 +1,3 @@
-import { format } from 'date-fns';
 
 // 1. SEVERITY (Input - The Situation)
 export const getSeverityConfig = (severity: number) => {

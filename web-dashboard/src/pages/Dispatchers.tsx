@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Shield, Phone, CreditCard, User, UserPlus, X, Save, Loader2 } from 'lucide-react';
+import { Search, Phone, CreditCard, User, UserPlus, X, Save, Loader2 } from 'lucide-react';
 import { useOfficers } from '../hooks/useOfficers';
 
 const Officers: React.FC = () => {

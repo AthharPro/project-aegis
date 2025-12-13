@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Radio, LayoutDashboard, MapPinned, Users, Settings, Database, LogOut } from 'lucide-react';
+import { Radio, LayoutDashboard, Users, Database, LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface SidebarProps {
