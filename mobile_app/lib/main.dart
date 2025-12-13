@@ -8,15 +8,13 @@ import 'pages/home_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Set portrait mode
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-  ]);
-  
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+
   // Initialize Hive
   await HiveDB.init();
-  
+
   runApp(const MyApp());
 }
 
@@ -40,12 +38,11 @@ class MyApp extends StatelessWidget {
               body: Center(child: CircularProgressIndicator()),
             );
           }
-          
+
           return snapshot.data == true ? const HomePage() : const LoginPage();
         },
       ),
       routes: {
-        '/': (context) => const LoginPage(),
         '/home': (context) => const HomePage(),
         // '/report': (context) => const DisasterFormPage(),
       },
