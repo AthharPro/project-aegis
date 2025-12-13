@@ -19,3 +19,12 @@ export interface Incident {
     phone_number?: string;
   };
 }
+
+export interface Profile {
+  id: string;
+  full_name: string;
+  nic: string;
+  phone_number: string;
+  role: 'admin' | 'dispatcher' | string;
+  created_at: string;
+}

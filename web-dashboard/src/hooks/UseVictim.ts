@@ -10,10 +10,20 @@ export const useIncidents = () => {
   // 2. Fetch Data
   useEffect(() => {
     const fetchIncidents = async () => {
+
+      console.log('🔄 Attempting to fetch initial data...');
+
       const { data, error } = await supabase
         .from('incident_reports')
         .select(`*, profiles ( full_name, phone_number )`)
         .order('incident_time', { ascending: false });
+
+      //DEBUG 2
+      if (error) {
+        console.error('❌ Supabase Fetch Error:', error);
+      } else {
+        console.log('✅ Initial Data Received:', data); // <--- CHECK THIS IN CONSOLE
+      }
 
       if (!error && data) setIncidents(data as Incident[]);
       setIsLoading(false);
@@ -24,13 +34,20 @@ export const useIncidents = () => {
     // 3. Realtime Listener
     const channel = supabase
       .channel('realtime-incidents')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'incident_reports' }, 
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'incident_reports' },
         async (payload) => {
+
+          //DEBUG 3
+          console.log('📡 Realtime Payload:', payload);
+
           if (payload.eventType === 'INSERT') {
             // FIX: Fetch the officer name for the new incident
             // (Realtime payloads don't include joined table data automatically)
             const newIncident = payload.new as Incident;
-            
+
+            // Log specifically what row was just added
+            console.log('➕ New Row Inserted:', newIncident);
+
             const { data: profile } = await supabase
               .from('profiles')
               .select('full_name, phone_number')
@@ -52,6 +69,10 @@ export const useIncidents = () => {
         }
       )
       .subscribe((status) => {
+
+        // DEBUG 4: Check if the socket actually connected
+        console.log('🔌 Connection Status Change:', status);
+        
         // 4. Update Connection Status
         setIsConnected(status === 'SUBSCRIBED');
       });
