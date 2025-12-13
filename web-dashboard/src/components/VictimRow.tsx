@@ -78,9 +78,8 @@ export const IncidentRow: React.FC<Props> = ({ incident, onUpdateStatus }) => {
                `}
              >
                <option value="PENDING" className="bg-slate-900 text-red-500">PENDING</option>
-               <option value="DISPATCHED" className="bg-slate-900 text-amber-500">DISPATCHED</option>
-               <option value="ON_SITE" className="bg-slate-900 text-blue-500">ON SITE</option>
-               <option value="RESOLVED" className="bg-slate-900 text-emerald-500">RESOLVED</option>
+               <option value="RESOLVED" className="bg-slate-900 text-blue-500">RESOLVED</option>
+               <option value="COMPLETED" className="bg-slate-900 text-emerald-500">COMPLETED</option>
              </select>
            ) : (
              <div className={`text-center text-xs font-bold py-1 px-2 rounded ${status.bg} ${status.color}`}>

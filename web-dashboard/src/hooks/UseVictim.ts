@@ -16,6 +16,7 @@ export const useIncidents = () => {
       const { data, error } = await supabase
         .from('incident_reports')
         .select(`*, profiles ( full_name, phone_number )`)
+        .neq('status', 'completed')
         .order('incident_time', { ascending: false });
 
       //DEBUG 2
@@ -72,7 +73,7 @@ export const useIncidents = () => {
 
         // DEBUG 4: Check if the socket actually connected
         console.log('🔌 Connection Status Change:', status);
-        
+
         // 4. Update Connection Status
         setIsConnected(status === 'SUBSCRIBED');
       });
@@ -82,17 +83,26 @@ export const useIncidents = () => {
 
   // 5. ACTION: Update Status (The "HQ Command" function)
   const updateStatus = async (id: string, newStatus: IncidentStatus) => {
-    // Optimistic Update (Update UI immediately for speed)
-    setIncidents(prev => prev.map(i => i.id === id ? { ...i, status: newStatus } : i));
+    const dbStatus = newStatus.toLowerCase(); // Ensure lowercase for DB
 
-    // Send to DB
+    // OPTIMISTIC UPDATE:
+    if (dbStatus === 'completed') {
+      // If completed, REMOVE it from the screen immediately
+      setIncidents(prev => prev.filter(i => i.id !== id));
+    } else {
+      // If just changing to 'resolved' or 'pending', keep it but update text
+      setIncidents(prev => prev.map(i => i.id === id ? { ...i, status: newStatus } : i));
+    }
+
+    // DATABASE CALL:
     const { error } = await supabase
       .from('incident_reports')
-      .update({ status: newStatus })
+      .update({ status: dbStatus })
       .eq('id', id);
 
     if (error) {
       console.error('Failed to update status:', error);
+      // Optional: Fetch data again to revert changes if DB fails
     }
   };
 

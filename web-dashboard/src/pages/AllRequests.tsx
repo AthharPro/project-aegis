@@ -1,32 +1,41 @@
 import React, { useState, useMemo } from 'react';
-import { Pagination, ConfigProvider, theme } from 'antd'; 
+import { Pagination, ConfigProvider, theme } from 'antd';
 import { Search, Filter, MapPin, User, AlertCircle, Clock } from 'lucide-react';
-import { useIncidents } from '../hooks/UseVictim'; // Updated Hook
-import { getSeverityConfig, getStatusConfig, formatTimestamp } from '../utils/helper'; // Updated Helpers
+import { useIncidents } from '../hooks/UseVictim';
+import { getSeverityConfig, getStatusConfig, formatTimestamp } from '../utils/helper';
 import type { Incident } from '../types';
 
 const AllRequests: React.FC = () => {
-  const { incidents, isLoading } = useIncidents();
-  
+  const { incidents, isLoading, updateStatus } = useIncidents();
+
   // --- Filter States ---
   const [searchTerm, setSearchTerm] = useState('');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
 
+  // --- NEW: Handle the 2-step Resolution Process ---
+  const handleResolve = (id: string) => {
+    // 1. Change to RESOLVED immediately (Visually shows green badge)
+    updateStatus(id, 'RESOLVED');
+
+    // 2. Wait 10 Seconds, then change to COMPLETED (Removes from list)
+    setTimeout(() => {
+      updateStatus(id, 'COMPLETED');
+    }, 10000); // 10,000 milliseconds = 10 seconds
+  };
+
   // --- Filtering Logic ---
   const filteredData = useMemo(() => {
     return incidents.filter(incident => {
-      // 1. Search Filter (Matches Incident Type, Officer Name, or GPS)
       const searchLower = searchTerm.toLowerCase();
       const officerName = incident.profiles?.full_name?.toLowerCase() || '';
-      
-      const matchesSearch = 
+
+      const matchesSearch =
         incident.incident_type.toLowerCase().includes(searchLower) ||
         officerName.includes(searchLower) ||
         `${incident.latitude}, ${incident.longitude}`.includes(searchLower);
 
-      // 2. Severity Filter (Maps Dropdown String -> Integer Range)
       let matchesSeverity = true;
       if (severityFilter !== 'all') {
         if (severityFilter === 'Critical') matchesSeverity = incident.severity >= 4;
@@ -51,7 +60,6 @@ const AllRequests: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
-
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="bg-slate-900 border-b border-slate-800 px-6 py-4 flex justify-between items-center">
@@ -65,16 +73,14 @@ const AllRequests: React.FC = () => {
         </div>
 
         <div className="flex-1 overflow-auto p-6 space-y-6">
-          
           {/* --- FILTERS BAR --- */}
           <div className="bg-slate-900/50 border border-slate-800 p-4 rounded-lg flex flex-col md:flex-row gap-4 items-center justify-between backdrop-blur-sm">
-            
             {/* Left: Search */}
             <div className="relative w-full md:w-96">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
-              <input 
-                type="text" 
-                placeholder="Search type, officer name, or coordinates..." 
+              <input
+                type="text"
+                placeholder="Search type, officer name, or coordinates..."
                 className="w-full bg-slate-950 border border-slate-700 rounded pl-10 pr-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition-colors placeholder:text-slate-600"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -84,7 +90,7 @@ const AllRequests: React.FC = () => {
             {/* Right: Dropdowns */}
             <div className="flex gap-4 w-full md:w-auto">
               <div className="relative">
-                <select 
+                <select
                   className="appearance-none bg-slate-950 border border-slate-700 text-slate-300 py-2 pl-4 pr-10 rounded text-sm focus:outline-none focus:border-blue-500 cursor-pointer"
                   value={severityFilter}
                   onChange={(e) => setSeverityFilter(e.target.value)}
@@ -123,19 +129,19 @@ const AllRequests: React.FC = () => {
                   const statusConfig = getStatusConfig(incident.status);
 
                   return (
-                    <div 
-                      key={incident.id} 
+                    <div
+                      key={incident.id}
                       className="grid grid-cols-12 gap-4 p-4 border-b border-slate-800/50 hover:bg-slate-800/50 transition-colors items-center text-sm group"
                     >
                       {/* Incident Type */}
                       <div className="col-span-3 font-medium text-slate-200 flex items-center gap-3">
-                         <div className={`w-2 h-2 rounded-full ${severityConfig.bg.replace('/20', '')} shadow-[0_0_8px_rgba(255,255,255,0.2)]`}></div>
-                         <div className="flex flex-col">
-                            <span>{incident.incident_type}</span>
-                            {incident.victim_count > 0 && (
-                              <span className="text-[10px] text-slate-500">{incident.victim_count} Victims</span>
-                            )}
-                         </div>
+                        <div className={`w-2 h-2 rounded-full ${severityConfig.bg.replace('/20', '')} shadow-[0_0_8px_rgba(255,255,255,0.2)]`}></div>
+                        <div className="flex flex-col">
+                          <span>{incident.incident_type}</span>
+                          {incident.victim_count > 0 && (
+                            <span className="text-[10px] text-slate-500">{incident.victim_count} Victims</span>
+                          )}
+                        </div>
                       </div>
 
                       {/* Severity Badge */}
@@ -147,10 +153,32 @@ const AllRequests: React.FC = () => {
 
                       {/* Status Badge */}
                       <div className="col-span-2">
-                         <span className={`flex items-center gap-1.5 w-fit px-2 py-1 rounded text-[10px] font-bold ${statusConfig.color} ${statusConfig.bg}`}>
+                        <div className="row-span-2 flex flex-row gap-2">
+                          <span className={`flex items-center gap-1.5 w-fit px-2 py-1 rounded text-[10px] font-bold ${statusConfig.color} ${statusConfig.bg}`}>
                             {incident.status === 'PENDING' && <AlertCircle size={10} />}
-                            {statusConfig.label}
-                         </span>
+                            {statusConfig.label.toUpperCase()}
+                          </span>
+
+                          {/* Status Change / Action Button */}
+                          {incident.status === 'RESOLVED' ? (
+                            // If currently RESOLVED, show a static Green Badge (waiting to disappear)
+                            <span className="flex items-center gap-1.5 w-fit px-2 py-1 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 cursor-default">
+                              CLOSING...
+                            </span>
+                          ) : (
+                            // If active, show a Clickable Action Button
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleResolve(incident.id); // Call the 10s delay logic
+                              }}
+                              className="flex items-center gap-1.5 w-fit px-3 py-1.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-600 hover:bg-emerald-600 hover:text-white hover:border-emerald-500 transition-all shadow-sm"
+                            >
+                              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                              MARK RESOLVED
+                            </button>
+                          )}
+                        </div>
                       </div>
 
                       {/* Location */}
@@ -161,14 +189,14 @@ const AllRequests: React.FC = () => {
 
                       {/* Officer & Time */}
                       <div className="col-span-2 text-right flex flex-col items-end gap-1">
-                          <div className="text-slate-300 flex items-center gap-1.5" title={incident.user_id}>
-                             <span className="truncate max-w-[100px]">{incident.profiles?.full_name || 'Unknown'}</span>
-                             <User className="w-3 h-3 text-slate-600" />
-                          </div>
-                          <div className="text-slate-500 font-mono text-[10px] flex items-center gap-1">
-                             {formatTimestamp(incident.incident_time)}
-                             <Clock className="w-3 h-3" />
-                          </div>
+                        <div className="text-slate-300 flex items-center gap-1.5" title={incident.user_id}>
+                          <span className="truncate max-w-[100px]">{incident.profiles?.full_name || 'Unknown'}</span>
+                          <User className="w-3 h-3 text-slate-600" />
+                        </div>
+                        <div className="text-slate-500 font-mono text-[10px] flex items-center gap-1">
+                          {formatTimestamp(incident.incident_time)}
+                          <Clock className="w-3 h-3" />
+                        </div>
                       </div>
                     </div>
                   );
@@ -182,15 +210,15 @@ const AllRequests: React.FC = () => {
                 theme={{
                   algorithm: theme.darkAlgorithm,
                   token: {
-                    colorPrimary: '#ef4444', 
-                    colorBgContainer: '#1e293b', 
-                    colorBorder: '#334155', 
+                    colorPrimary: '#ef4444',
+                    colorBgContainer: '#1e293b',
+                    colorBorder: '#334155',
                   },
                 }}
               >
-                <Pagination 
-                  current={currentPage} 
-                  total={filteredData.length} 
+                <Pagination
+                  current={currentPage}
+                  total={filteredData.length}
                   pageSize={pageSize}
                   onChange={handlePageChange}
                   showSizeChanger={false}

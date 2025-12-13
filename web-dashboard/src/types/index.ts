@@ -1,4 +1,4 @@
-export type IncidentStatus = 'PENDING' | 'COMPLETED' | 'RESOLVED';
+export type IncidentStatus = 'PENDING' | 'RESOLVED' | 'COMPLETED' ;
 
 export interface Incident {
   id: string;

@@ -12,10 +12,9 @@ export const getSeverityConfig = (severity: number) => {
 // 2. STATUS (Output - The HQ Action)
 export const getStatusConfig = (status: string) => {
   switch (status) {
-    case 'PENDING': return { label: 'NEEDS ACTION', color: 'text-white', bg: 'bg-red-600 animate-pulse' };
-    case 'DISPATCHED': return { label: 'UNIT EN ROUTE', color: 'text-slate-900', bg: 'bg-amber-400' };
-    case 'ON_SITE': return { label: 'ENGAGED', color: 'text-white', bg: 'bg-blue-600' };
-    case 'RESOLVED': return { label: 'CLOSED', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border border-emerald-500/30' };
+    case 'PENDING': return { label: 'PENDING', color: 'text-red-400', bg: 'bg-red-600/10 border border-red-600/30' };
+    case 'RESOLVED': return { label: 'RESOLVED', color: 'text-amber-400', bg: 'bg-amber-400/10 border border-amber-400/30' };
+    case 'COMPLETED': return { label: 'COMPLETED', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border border-emerald-500/30' };
     default: return { label: status, color: 'text-slate-400', bg: 'bg-slate-800' };
   }
 };
