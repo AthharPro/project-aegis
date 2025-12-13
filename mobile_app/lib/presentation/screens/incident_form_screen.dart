@@ -9,8 +9,6 @@ import '../../data/models/incident_model.dart';
 import '../../data/sync_service.dart';
 import '../widgets/offline_status_banner.dart';
 import 'pending_reports_screen.dart';
-import 'login_screen.dart';
-import 'pending_reports_screen.dart';
 import 'local_data_screen.dart';
 import 'login_screen.dart';
 import '../../data/remote/supabase_service.dart';
@@ -61,6 +59,7 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
       }
     });
     _checkInitialConnection();
+    _requestPermission();
   }
 
   @override
@@ -85,6 +84,18 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
     if (connected) _syncService.syncPendingIncidents();
   }
 
+  Future<void> _requestPermission() async {
+    if (!kIsWeb) {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.deniedForever) {
+        debugPrint('Location denied forever');
+      }
+    }
+  }
+
   Future<void> _submitReport() async {
     // 1. Immediate UI Feedback
     setState(() => _isLoading = true);
@@ -92,7 +103,6 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
     try {
       // 2. ZERO-DELAY LOCATION STRATEGY
       // Use the cached live position. If null, try last known. If that's null, default to 0,0.
-      // We DO NOT await getCurrentPosition() here because it blocks the "Instant Save".
       
       Position? finalPosition = _lastPosition;
       if (finalPosition == null && !kIsWeb) {
@@ -111,7 +121,7 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
         victimCount: _victimCount,
       );
 
-      // 3. INTERNAL HIVE SAVE (Fast)
+      // 3. INSTANT LOCAL SAVE
       await _hiveService.saveIncident(incident);
 
       if (mounted) {
