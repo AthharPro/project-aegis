@@ -1,50 +1,79 @@
-import { useState, useEffect } from 'react';
-import  type{ Victim } from '../types';
+import { useEffect, useState } from 'react';
+import { supabase } from '../services/supabaseClient';
+import type { Incident, IncidentStatus } from '../types';
 
-const MOCK_VICTIMS: Victim[] = [
-  { id: '1', full_name: 'John Anderson', injury_status: 'Critical', gps_lat: 6.9271, gps_long: 79.8612, created_at: new Date(Date.now() - 120000).toISOString(), officer_id: 'off-001' },
-  { id: '2', full_name: 'Sarah Mitchell', injury_status: 'Stable', gps_lat: 6.9155, gps_long: 79.8750, created_at: new Date(Date.now() - 300000).toISOString(), officer_id: 'off-002' },
-  { id: '3', full_name: 'Michael Chen', injury_status: 'Critical', gps_lat: 6.9350, gps_long: 79.8500, created_at: new Date(Date.now() - 450000).toISOString(), officer_id: 'off-003' },
-  { id: '4', full_name: 'Emma Rodriguez', injury_status: 'Stable', gps_lat: 6.9100, gps_long: 79.8650, created_at: new Date(Date.now() - 600000).toISOString(), officer_id: 'off-001' },
-  { id: '5', full_name: 'David Thompson', injury_status: 'Deceased', gps_lat: 6.9200, gps_long: 79.8550, created_at: new Date(Date.now() - 900000).toISOString(), officer_id: 'off-004' }
-];
-
-export const useVictims = () => {
-  const [victims, setVictims] = useState<Victim[]>([]);
-  const [isConnected, setIsConnected] = useState(true);
+export const useIncidents = () => {
+  const [incidents, setIncidents] = useState<Incident[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isConnected, setIsConnected] = useState(false); // 1. Add State
 
+  // 2. Fetch Data
   useEffect(() => {
-    // Simulate initial load
-    setTimeout(() => {
-      setVictims(MOCK_VICTIMS);
+    const fetchIncidents = async () => {
+      const { data, error } = await supabase
+        .from('incident_reports')
+        .select(`*, profiles ( full_name, phone_number )`)
+        .order('incident_time', { ascending: false });
+
+      if (!error && data) setIncidents(data as Incident[]);
       setIsLoading(false);
-    }, 800);
-
-    // Simulate realtime updates
-    const interval = setInterval(() => {
-      const newVictim: Victim = {
-        id: `mock-${Date.now()}`,
-        full_name: ['Alex Parker', 'Maria Santos', 'James Wilson', 'Lisa Brown', 'Robert Taylor'][Math.floor(Math.random() * 5)],
-        injury_status: ['Critical', 'Stable', 'Deceased'][Math.floor(Math.random() * 3)] as any,
-        gps_lat: 6.9271 + (Math.random() - 0.5) * 0.05,
-        gps_long: 79.8612 + (Math.random() - 0.5) * 0.05,
-        created_at: new Date().toISOString(),
-        officer_id: `off-00${Math.floor(Math.random() * 5) + 1}`
-      };
-      setVictims(prev => [newVictim, ...prev]);
-    }, 15000);
-
-    // Simulate connection drops
-    const connectionInterval = setInterval(() => {
-      setIsConnected(prev => Math.random() > 0.1 ? true : prev);
-    }, 5000);
-
-    return () => {
-      clearInterval(interval);
-      clearInterval(connectionInterval);
     };
+
+    fetchIncidents();
+
+    // 3. Realtime Listener
+    const channel = supabase
+      .channel('realtime-incidents')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'incident_reports' }, 
+        async (payload) => {
+          if (payload.eventType === 'INSERT') {
+            // FIX: Fetch the officer name for the new incident
+            // (Realtime payloads don't include joined table data automatically)
+            const newIncident = payload.new as Incident;
+            
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('full_name, phone_number')
+              .eq('id', newIncident.user_id)
+              .single();
+
+            const incidentWithProfile = {
+              ...newIncident,
+              profiles: profile || { full_name: 'Unknown Officer' }
+            };
+
+            setIncidents((prev) => [incidentWithProfile as Incident, ...prev]);
+
+          } else if (payload.eventType === 'UPDATE') {
+            // Status update happened!
+            // We merge payload.new into the existing item to keep the profile data intact
+            setIncidents((prev) => prev.map(i => i.id === payload.new.id ? { ...i, ...payload.new } : i));
+          }
+        }
+      )
+      .subscribe((status) => {
+        // 4. Update Connection Status
+        setIsConnected(status === 'SUBSCRIBED');
+      });
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
-  return { victims, isConnected, isLoading };
+  // 5. ACTION: Update Status (The "HQ Command" function)
+  const updateStatus = async (id: string, newStatus: IncidentStatus) => {
+    // Optimistic Update (Update UI immediately for speed)
+    setIncidents(prev => prev.map(i => i.id === id ? { ...i, status: newStatus } : i));
+
+    // Send to DB
+    const { error } = await supabase
+      .from('incident_reports')
+      .update({ status: newStatus })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Failed to update status:', error);
+    }
+  };
+
+  return { incidents, updateStatus, isLoading, isConnected };
 };

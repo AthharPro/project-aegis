@@ -1,75 +1,94 @@
 import React from 'react';
-import { MapPinned } from 'lucide-react';
-import type { Victim } from '../types';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css'; 
+import L from 'leaflet';
+import type { Incident } from '../types';
+import { formatDistanceToNow } from 'date-fns';
+import { getSeverityConfig } from '../utils/helper';
 
-export const MapView: React.FC<{ victims: Victim[] }> = ({ victims }) => {
-  const centerLat = victims.length > 0 
-    ? victims.reduce((sum, v) => sum + v.gps_lat, 0) / victims.length 
-    : 6.9271;
-  const centerLng = victims.length > 0 
-    ? victims.reduce((sum, v) => sum + v.gps_long, 0) / victims.length 
-    : 79.8612;
+// --- Icon Factory ---
+const createIcon = (color: string) => new L.DivIcon({
+  className: 'custom-icon',
+  html: `<div style="background-color: ${color}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px ${color};"></div>`,
+  iconSize: [14, 14],
+  iconAnchor: [7, 7], // Center the icon
+});
+
+// Map Severity Levels to Hex Colors for Leaflet
+const getIconForSeverity = (severity: number) => {
+  if (severity >= 4) return createIcon('#ef4444'); // Red (Critical)
+  if (severity === 3) return createIcon('#f97316'); // Orange (High)
+  if (severity === 2) return createIcon('#eab308'); // Yellow (Moderate)
+  return createIcon('#10b981'); // Emerald (Low)
+};
+
+export const MapView: React.FC<{ incidents: Incident[] }> = ({ incidents }) => {
+  // Default center (Colombo, Sri Lanka)
+  const defaultCenter: [number, number] = [6.9271, 79.8612];
+  
+  // Calculate center based on first incident if available
+  const center: [number, number] = incidents.length > 0 
+    ? [incidents[0].latitude, incidents[0].longitude] 
+    : defaultCenter;
 
   return (
-    <div className="relative w-full h-full bg-slate-900 rounded-lg overflow-hidden border border-slate-700/50">
-      {/* Map Header */}
-      <div className="absolute top-0 left-0 right-0 z-10 bg-slate-900/90 backdrop-blur-sm border-b border-slate-700/50 p-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-slate-300">
-            <MapPinned className="w-4 h-4" />
-            <span className="text-sm font-semibold uppercase tracking-wide">Tactical Map</span>
-          </div>
-          <div className="text-xs text-slate-500 font-mono">
-            Center: {centerLat.toFixed(4)}, {centerLng.toFixed(4)}
-          </div>
-        </div>
-      </div>
+    <div className="h-full w-full rounded-lg overflow-hidden border border-slate-700 relative z-0">
+      <MapContainer 
+        center={center} 
+        zoom={13} 
+        scrollWheelZoom={true} 
+        style={{ height: '100%', width: '100%' }}
+      >
+        {/* Dark Matter Map Tiles */}
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        />
 
-      {/* SVG Map Visualization */}
-      <div className="absolute inset-0 pt-14">
-        <svg className="w-full h-full" viewBox="0 0 800 600">
-          <defs>
-            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" strokeWidth="0.5"/>
-            </pattern>
-          </defs>
-          <rect width="800" height="600" fill="url(#grid)" />
+        {/* Render Markers */}
+        {incidents.map((incident) => {
+          const config = getSeverityConfig(incident.severity);
           
-          {victims.map((victim, idx) => {
-            const x = 400 + (victim.gps_long - centerLng) * 8000;
-            const y = 300 - (victim.gps_lat - centerLat) * 8000;
-            const color = victim.injury_status === 'Critical' ? '#ef4444' 
-              : victim.injury_status === 'Stable' ? '#10b981' 
-              : '#64748b';
-            
-            return (
-              <g key={victim.id}>
-                <circle cx={x} cy={y} r="20" fill={color} opacity="0.3">
-                  <animate attributeName="r" from="10" to="30" dur="2s" repeatCount="indefinite" />
-                  <animate attributeName="opacity" from="0.5" to="0" dur="2s" repeatCount="indefinite" />
-                </circle>
-                <circle cx={x} cy={y} r="6" fill={color} stroke="#0f172a" strokeWidth="2" />
-                <text x={x} y={y - 12} fill="#e2e8f0" fontSize="10" textAnchor="middle" className="font-mono">
-                  {idx + 1}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
-      </div>
-      
-      {/* Legend */}
-      <div className="absolute bottom-3 right-3 bg-slate-900/90 backdrop-blur-sm border border-slate-700/50 rounded p-2">
-        <div className="space-y-1">
-          {[{ label: 'Critical', color: 'bg-red-500' }, { label: 'Stable', color: 'bg-emerald-500' }, { label: 'Deceased', color: 'bg-slate-500' }]
-            .map(({ label, color }) => (
-            <div key={label} className="flex items-center gap-2 text-xs">
-              <div className={`w-3 h-3 rounded-full ${color}`} />
-              <span className="text-slate-400">{label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+          return (
+            <Marker 
+              key={incident.id} 
+              position={[incident.latitude, incident.longitude]}
+              icon={getIconForSeverity(incident.severity)}
+            >
+              <Popup className="custom-popup">
+                <div className="text-slate-900 min-w-[150px]">
+                  {/* Header */}
+                  <div className="flex justify-between items-start mb-1">
+                    <strong className="block text-sm font-bold uppercase">{incident.incident_type}</strong>
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded text-white ${
+                      incident.severity >= 4 ? 'bg-red-500' : 
+                      incident.severity === 3 ? 'bg-orange-500' : 
+                      incident.severity === 2 ? 'bg-yellow-500' : 'bg-emerald-500'
+                    }`}>
+                      LVL {incident.severity}
+                    </span>
+                  </div>
+
+                  {/* Details */}
+                  <div className="text-xs text-slate-600 mb-2">
+                    {incident.victim_count > 0 ? (
+                      <span className="font-semibold text-slate-800">{incident.victim_count} Victims Reported</span>
+                    ) : (
+                      <span>No victims reported</span>
+                    )}
+                  </div>
+
+                  {/* Footer */}
+                  <div className="border-t border-slate-200 pt-1 mt-1 flex justify-between items-center text-[10px] text-slate-500">
+                    <span>{incident.profiles?.full_name || 'Unknown Officer'}</span>
+                    <span>{formatDistanceToNow(new Date(incident.incident_time), { addSuffix: true })}</span>
+                  </div>
+                </div>
+              </Popup>
+            </Marker>
+          );
+        })}
+      </MapContainer>
     </div>
   );
 };
