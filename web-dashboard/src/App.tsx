@@ -3,6 +3,7 @@ import { Layout } from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import AllRequests from './pages/AllRequests';
 import Dispatchers from './pages/Dispatchers';
+import CompletedRequests from './pages/CompletedRequests';
 import { useEffect } from 'react';
 import { supabase } from './services/supabaseClient';
 
@@ -31,6 +32,7 @@ function App() {
       <Route path="/" element={<Layout />}>
         <Route index element={<Dashboard />} />
         <Route path="requests" element={<AllRequests />} />
+        <Route path="completed-requests" element={<CompletedRequests />} />
         <Route path="dispatchers" element={<Dispatchers />} />
 
         {/* Placeholder pages for buttons that don't have code yet */}

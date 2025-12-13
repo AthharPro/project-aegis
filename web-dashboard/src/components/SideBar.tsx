@@ -9,7 +9,8 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ activeView }) => {
     const menuItems = [
         { id: 'dashboard', path: '/', icon: LayoutDashboard, label: 'Dashboard' },
-        { id: 'requests', path: '/requests', icon: Database, label: 'All Requests' }, // New Link
+        { id: 'requests', path: '/requests', icon: Database, label: 'All Requests' },
+        { id: 'completed-requests', path: '/completed-requests', icon: Database, label: 'Completed Requests' },
         { id: 'map', path: '/map', icon: MapPinned, label: 'Map View' },
         { id: 'dispatchers', path: '/dispatchers', icon: Users, label: 'Dispatchers' },
         { id: 'settings', path: '/settings', icon: Settings, label: 'Settings' }

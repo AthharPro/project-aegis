@@ -6,6 +6,7 @@ export const useIncidents = () => {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isConnected, setIsConnected] = useState(false); // 1. Add State
+  const [completedIncidents, setCompletedIncidents] = useState<Incident[]>([]);
 
   // 2. Fetch Data
   useEffect(() => {
@@ -31,6 +32,26 @@ export const useIncidents = () => {
     };
 
     fetchIncidents();
+
+    const fetchCompletedIncidents = async () => {
+
+      const { data, error } = await supabase
+        .from('incident_reports')
+        .select(`*, profiles ( full_name, phone_number )`)
+        .eq('status', 'completed')
+        .order('incident_time', { ascending: false });
+
+      if (error) {
+        console.error('❌ Supabase Fetch Error:', error);
+      } else {
+        console.log('✅ Initial Data Received:', data); // <--- CHECK THIS IN CONSOLE
+      }
+
+      if (!error && data) setCompletedIncidents(data as Incident[]);
+      setIsLoading(false);
+    };
+
+    fetchCompletedIncidents();
 
     // 3. Realtime Listener
     const channel = supabase
@@ -106,5 +127,5 @@ export const useIncidents = () => {
     }
   };
 
-  return { incidents, updateStatus, isLoading, isConnected };
+  return { incidents, updateStatus, isLoading, isConnected, completedIncidents };
 };
