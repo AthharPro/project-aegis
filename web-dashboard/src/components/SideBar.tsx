@@ -11,7 +11,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView }) => {
         { id: 'dashboard', path: '/', icon: LayoutDashboard, label: 'Dashboard' },
         { id: 'requests', path: '/requests', icon: Database, label: 'All Requests' }, // New Link
         { id: 'map', path: '/map', icon: MapPinned, label: 'Map View' },
-        { id: 'officers', path: '/officers', icon: Users, label: 'Officers' },
+        { id: 'dispatchers', path: '/dispatchers', icon: Users, label: 'Dispatchers' },
         { id: 'settings', path: '/settings', icon: Settings, label: 'Settings' }
     ];
 
