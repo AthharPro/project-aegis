@@ -1,0 +1,247 @@
+import React, { useState } from 'react';
+import { Pagination, ConfigProvider, theme } from 'antd';
+import { Search, Filter, MapPin, User, AlertCircle, Clock, Check, X } from 'lucide-react';
+import { useIncidentsPaginated } from '../hooks/UseIncidentsPaginated';
+import { getSeverityConfig, getStatusConfig, formatTimestamp, formatVictimCount } from '../utils/helper';
+import type { Incident } from '../types';
+
+const AllRequests: React.FC = () => {
+  // --- Filter & Pagination States ---
+  const [searchTerm, setSearchTerm] = useState('');
+  const [severityFilter, setSeverityFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const pageSize = 8;
+
+  const { incidents, total, isLoading, updateStatus } = useIncidentsPaginated({
+    page: currentPage,
+    pageSize,
+    searchTerm,
+    severityFilter,
+  });
+
+  // --- NEW: Handle the 2-step Resolution Process ---
+  const handleResolve = (id: string) => {
+    // 1. Change to RESOLVED immediately (Visually shows green badge)
+    updateStatus(id, 'RESOLVED');
+    setConfirmingId(null);
+    // 2. Wait 10 Seconds, then change to COMPLETED (Removes from list)
+    setTimeout(() => {
+      updateStatus(id, 'COMPLETED');
+    }, 2000); // 5,000 milliseconds = 5 seconds
+  };
+
+  // Reset to first page when filters/search change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, severityFilter]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  return (
+    <div className="flex h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header (unchanged) */}
+        <div className="bg-slate-900 border-b border-slate-800 px-6 py-4 flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Mission Logs</h1>
+            <p className="text-sm text-slate-500">Master database of all incident reports</p>
+          </div>
+          <div className="text-xs font-mono text-slate-500 bg-slate-800 px-3 py-1 rounded border border-slate-700">
+            TOTAL RECORDS: {total}
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-auto p-6 space-y-6">
+
+          <div className="bg-slate-900/50 border border-slate-800 p-4 rounded-lg flex flex-col md:flex-row gap-4 items-center justify-between backdrop-blur-sm">
+            {/* Left: Search */}
+            <div className="relative w-full md:w-96">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search type, officer name, or coordinates..."
+                className="w-full bg-slate-950 border border-slate-700 rounded pl-10 pr-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition-colors placeholder:text-slate-600"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            {/* Right: Dropdowns */}
+            <div className="flex gap-4 w-full md:w-auto">
+              <div className="relative">
+                <select
+                  className="appearance-none bg-slate-950 border border-slate-700 text-slate-300 py-2 pl-4 pr-10 rounded text-sm focus:outline-none focus:border-blue-500 cursor-pointer"
+                  value={severityFilter}
+                  onChange={(e) => setSeverityFilter(e.target.value)}
+                >
+                  <option value="all">All Severities</option>
+                  <option value="Critical">Critical (Lvl 4-5)</option>
+                  <option value="High">High (Lvl 3)</option>
+                  <option value="Moderate">Moderate (Lvl 2)</option>
+                  <option value="Low">Low (Lvl 1)</option>
+                </select>
+                <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 w-3 h-3 pointer-events-none" />
+              </div>
+            </div>
+          </div>
+          {/* --- TABLE CONTENT --- */}
+          <div className="bg-slate-900/50 border border-slate-800 rounded-lg overflow-hidden flex flex-col min-h-[600px]">
+            {/* Table Header: TOTAL 12 COLUMNS */}
+            <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-800 bg-slate-900/80 text-xs font-bold text-slate-500 uppercase tracking-wider">
+              <div className="col-span-3">Incident Type</div>       {/* 3 */}
+              <div className="col-span-1">Severity</div>          {/* 1 */}
+              <div className="col-span-2">HQ Status</div>           {/* 2 */}
+              <div className="col-span-3">Location</div>            {/* 3 */}
+              <div className="col-span-1 text-center">Victims</div> {/* 1 */}
+              <div className="col-span-2 text-right">Responder / Time</div> {/* 2 */}
+            </div>
+
+            {/* Table Rows */}
+            <div className="flex-1">
+              {isLoading ? (
+                <div className="p-8 text-center text-slate-500">Loading records...</div>
+              ) : incidents.length === 0 ? (
+                <div className="p-8 text-center text-slate-500">No records found matching your filters.</div>
+              ) : (
+                incidents.map((incident: Incident) => {
+                  const severityConfig = getSeverityConfig(incident.severity);
+                  const statusConfig = getStatusConfig(incident.status);
+
+                  return (
+                    <div
+                      key={incident.id}
+                      className="grid grid-cols-12 gap-4 p-4 border-b border-slate-800/50 hover:bg-slate-800/50 transition-colors items-center text-sm group"
+                    >
+                      {/* Incident Type (col-span-3) */}
+                      <div className="col-span-3 font-medium text-slate-200 flex items-center gap-3">
+                        <div className={`w-2 h-2 rounded-full ${severityConfig.bg.replace('/20', '')} shadow-[0_0_8px_rgba(255,255,255,0.2)]`}></div>
+                        <div className="flex flex-col">
+                          <span>{incident.incident_type}</span>
+                        </div>
+                      </div>
+
+                      {/* Severity Badge (col-span-1) */}
+                      <div className="col-span-1">
+                        <span className={`px-2 py-1 rounded border text-[10px] font-bold ${severityConfig.color} ${severityConfig.bg} ${severityConfig.border}`}>
+                          {severityConfig.label}
+                        </span>
+                      </div>
+
+                      {/* Status Badge & Action Button (col-span-2) */}
+                      <div className="col-span-2">
+                        <div className="flex flex-row gap-2 items-center">
+                          {/* Status Badge */}
+                          <span className={`flex items-center gap-1.5 w-fit px-2 py-1 rounded text-[10px] font-bold ${statusConfig.color} ${statusConfig.bg}`}>
+                            {incident.status === 'PENDING' && <AlertCircle size={10} />}
+                            {statusConfig.label.toUpperCase()}
+                          </span>
+
+                          {/* Action Button Logic */}
+                          {confirmingId === incident.id ? (
+                            // --- CONFIRMATION STATE (YES/NO BUTTONS) ---
+                            <div className="flex items-center gap-2">
+                              {/* CONFIRM Button */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleResolve(incident.id);
+                                }}
+                                className="w-8 h-8 p-1 rounded-sm bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-sm flex items-center justify-center"
+                              >
+                                <Check size={14} />
+                              </button>
+
+                              {/* CANCEL Button */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setConfirmingId(null);
+                                }}
+                                className="w-8 h-8 p-1 rounded-sm bg-red-600 hover:bg-red-700 text-white transition-colors shadow-sm flex items-center justify-center"
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+
+                          ) : incident.status.toUpperCase() === 'RESOLVED' ? (
+                            // Show nothing/space while the timer runs
+                            <div className="w-12 h-8"></div>
+
+                          ) : (
+                            // --- INITIAL Active State ---
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setConfirmingId(incident.id);
+                              }}
+                              className="flex items-center gap-1.5 w-fit px-3 py-1.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-600 hover:bg-emerald-600 hover:text-white hover:border-emerald-500 transition-all shadow-sm"
+                            >
+                              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                              MARK RESOLVED
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Location (col-span-3) */}
+                      <div className="col-span-3 text-slate-400 font-mono text-xs flex items-center gap-2">
+                        <MapPin className="w-3 h-3 text-slate-600" />
+                        {incident.latitude.toFixed(4)}, {incident.longitude.toFixed(4)}
+                      </div>
+
+                      {/* Victim Count (col-span-1) */}
+                      <div className="col-span-1 text-slate-400 font-mono text-xs flex justify-center items-center">
+                        <span className="text-sm font-bold text-slate-300">
+                          {formatVictimCount(incident.victim_count)}
+                        </span>
+                      </div>
+
+                      {/* Officer & Time (col-span-2) */}
+                      <div className="col-span-2 text-right flex flex-col items-end gap-1">
+                        <div className="text-slate-300 flex items-center gap-1.5" title={incident.user_id}>
+                          <span className="w-[120px] truncate">{incident.profiles?.full_name || 'Unknown'}</span>
+                          <User className="w-3 h-3 text-slate-600" />
+                        </div>
+                        <div className="text-slate-500 font-mono text-[14px] flex items-center gap-1">
+                          {formatTimestamp(incident.incident_time)}
+                          <Clock className="w-3 h-3" />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* --- PAGINATION FOOTER --- */}
+            <div className="p-4 border-t border-slate-800 bg-slate-900/50 flex justify-end">
+              <ConfigProvider
+                theme={{
+                  algorithm: theme.darkAlgorithm,
+                  token: {
+                    colorPrimary: '#ef4444',
+                    colorBgContainer: '#1e293b',
+                    colorBorder: '#334155',
+                  },
+                }}
+              >
+                <Pagination
+                  current={currentPage}
+                  total={total}
+                  pageSize={pageSize}
+                  onChange={handlePageChange}
+                  showSizeChanger={false}
+                />
+              </ConfigProvider>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AllRequests;
