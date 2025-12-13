@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Pagination, ConfigProvider, theme } from 'antd';
 import { Search, Filter, MapPin, User, AlertCircle, Clock, Check, X } from 'lucide-react';
 import { useIncidents } from '../hooks/UseVictim';
-import { getSeverityConfig, getStatusConfig, formatTimestamp } from '../utils/helper';
+import { getSeverityConfig, getStatusConfig, formatTimestamp, formatVictimCount } from '../utils/helper';
 import type { Incident } from '../types';
 
 const AllRequests: React.FC = () => {
@@ -128,7 +128,7 @@ const AllRequests: React.FC = () => {
                                                 <div className="flex flex-col">
                                                     <span>{incident.incident_type}</span>
                                                     {incident.victim_count > 0 && (
-                                                        <span className="text-[10px] text-slate-500">{incident.victim_count} Victims</span>
+                                                        <span className="text-[10px] text-slate-500">{formatVictimCount(incident.victim_count)} Victims</span>
                                                     )}
                                                 </div>
                                             </div>

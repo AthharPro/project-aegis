@@ -34,3 +34,11 @@ export const formatTimestamp = (timestamp: string): string => {
   // Final display string
   return `${hours12}:${minutesPadded} ${ampm}`;
 };
+
+export const formatVictimCount = (count: number): string => {
+  if (count === 0) return '0';
+  if (count <= 10) return '0-10';
+  if (count <= 50) return '10-50';
+  if (count <= 100) return '50-100';
+  return '100+';
+};

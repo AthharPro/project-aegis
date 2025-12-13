@@ -1,7 +1,7 @@
 import React from 'react';
 import { MapPin, Clock, Radio } from 'lucide-react';
 import type { Incident, IncidentStatus } from '../types';
-import { getSeverityConfig, getStatusConfig, formatTimestamp } from '../utils/helper';
+import { getSeverityConfig, getStatusConfig, formatTimestamp, formatVictimCount } from '../utils/helper';
 
 interface Props {
   incident: Incident;
@@ -45,7 +45,7 @@ export const IncidentRow: React.FC<Props> = ({ incident, onUpdateStatus }) => {
             {/* Victim Counter */}
             {incident.victim_count > 0 && (
               <div className="text-center bg-slate-800 px-3 py-1 rounded border border-slate-700">
-                <div className="text-lg font-bold text-white leading-none">{incident.victim_count}</div>
+                <div className="text-lg font-bold text-white leading-none">{formatVictimCount(incident.victim_count)}</div>
                 <div className="text-[9px] text-slate-500 uppercase">Victims</div>
               </div>
             )}

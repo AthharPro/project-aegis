@@ -4,6 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import type { Incident } from '../types';
 import { formatDistanceToNow } from 'date-fns';
+import { formatVictimCount } from '../utils/helper';
 //import { getSeverityConfig } from '../utils/helper';
 
 // --- Icon Factory ---
@@ -41,7 +42,6 @@ export const MapView: React.FC<{ incidents: Incident[] }> = ({ incidents }) => {
             >
                 {/* Dark Matter Map Tiles */}
                 <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
                     url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                 />
 
@@ -71,7 +71,7 @@ export const MapView: React.FC<{ incidents: Incident[] }> = ({ incidents }) => {
                                     {/* Details */}
                                     <div className="text-xs text-slate-600 mb-2">
                                         {incident.victim_count > 0 ? (
-                                            <span className="font-semibold text-slate-800">{incident.victim_count} Victims Reported</span>
+                                            <span className="font-semibold text-slate-800">{formatVictimCount(incident.victim_count)} Victims Reported</span>
                                         ) : (
                                             <span>No victims reported</span>
                                         )}

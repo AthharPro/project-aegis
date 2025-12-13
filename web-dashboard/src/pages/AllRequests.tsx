@@ -1,19 +1,24 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Pagination, ConfigProvider, theme } from 'antd';
 import { Search, Filter, MapPin, User, AlertCircle, Clock, Check, X } from 'lucide-react';
-import { useIncidents } from '../hooks/UseVictim';
-import { getSeverityConfig, getStatusConfig, formatTimestamp } from '../utils/helper';
+import { useIncidentsPaginated } from '../hooks/UseIncidentsPaginated';
+import { getSeverityConfig, getStatusConfig, formatTimestamp, formatVictimCount } from '../utils/helper';
 import type { Incident } from '../types';
 
 const AllRequests: React.FC = () => {
-  const { incidents, isLoading, updateStatus } = useIncidents();
-
-  // --- Filter States ---
+  // --- Filter & Pagination States ---
   const [searchTerm, setSearchTerm] = useState('');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const pageSize = 8;
+
+  const { incidents, total, isLoading, updateStatus } = useIncidentsPaginated({
+    page: currentPage,
+    pageSize,
+    searchTerm,
+    severityFilter,
+  });
 
   // --- NEW: Handle the 2-step Resolution Process ---
   const handleResolve = (id: string) => {
@@ -26,34 +31,10 @@ const AllRequests: React.FC = () => {
     }, 2000); // 5,000 milliseconds = 5 seconds
   };
 
-  // --- Filtering Logic ---
-  const filteredData = useMemo(() => {
-    return incidents.filter(incident => {
-      const searchLower = searchTerm.toLowerCase();
-      const officerName = incident.profiles?.full_name?.toLowerCase() || '';
-
-      const matchesSearch =
-        incident.incident_type.toLowerCase().includes(searchLower) ||
-        officerName.includes(searchLower) ||
-        `${incident.latitude}, ${incident.longitude}`.includes(searchLower);
-
-      let matchesSeverity = true;
-      if (severityFilter !== 'all') {
-        if (severityFilter === 'Critical') matchesSeverity = incident.severity >= 4;
-        else if (severityFilter === 'High') matchesSeverity = incident.severity === 3;
-        else if (severityFilter === 'Moderate') matchesSeverity = incident.severity === 2;
-        else if (severityFilter === 'Low') matchesSeverity = incident.severity === 1;
-      }
-
-      return matchesSearch && matchesSeverity;
-    });
-  }, [incidents, searchTerm, severityFilter]);
-
-  // --- Pagination Logic ---
-  const currentData = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return filteredData.slice(start, start + pageSize);
-  }, [filteredData, currentPage]);
+  // Reset to first page when filters/search change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, severityFilter]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -69,7 +50,7 @@ const AllRequests: React.FC = () => {
             <p className="text-sm text-slate-500">Master database of all incident reports</p>
           </div>
           <div className="text-xs font-mono text-slate-500 bg-slate-800 px-3 py-1 rounded border border-slate-700">
-            TOTAL RECORDS: {incidents.length}
+            TOTAL RECORDS: {total}
           </div>
         </div>
 
@@ -122,10 +103,10 @@ const AllRequests: React.FC = () => {
             <div className="flex-1">
               {isLoading ? (
                 <div className="p-8 text-center text-slate-500">Loading records...</div>
-              ) : currentData.length === 0 ? (
+              ) : incidents.length === 0 ? (
                 <div className="p-8 text-center text-slate-500">No records found matching your filters.</div>
               ) : (
-                currentData.map((incident: Incident) => {
+                incidents.map((incident: Incident) => {
                   const severityConfig = getSeverityConfig(incident.severity);
                   const statusConfig = getStatusConfig(incident.status);
 
@@ -214,7 +195,7 @@ const AllRequests: React.FC = () => {
                       {/* Victim Count (col-span-1) */}
                       <div className="col-span-1 text-slate-400 font-mono text-xs flex justify-center items-center">
                         <span className="text-sm font-bold text-slate-300">
-                          {incident.victim_count}
+                          {formatVictimCount(incident.victim_count)}
                         </span>
                       </div>
 
@@ -249,7 +230,7 @@ const AllRequests: React.FC = () => {
               >
                 <Pagination
                   current={currentPage}
-                  total={filteredData.length}
+                  total={total}
                   pageSize={pageSize}
                   onChange={handlePageChange}
                   showSizeChanger={false}

@@ -161,7 +161,7 @@ const Officers: React.FC = () => {
                                     required
                                     type="email"
                                     className="w-full bg-slate-950 border border-slate-700 rounded px-3 py-2 text-sm text-white focus:border-red-500 outline-none placeholder:text-slate-700"
-                                    placeholder="officer@police.lk"
+                                    placeholder="Ahamed@gmail.com"
                                     value={formData.email}
                                     onChange={e => setFormData({ ...formData, email: e.target.value })}
                                 />
@@ -174,7 +174,7 @@ const Officers: React.FC = () => {
                                     required
                                     type="text"
                                     className="w-full bg-slate-950 border border-slate-700 rounded px-3 py-2 text-sm text-white focus:border-red-500 outline-none placeholder:text-slate-700"
-                                    placeholder="e.g. Officer John Doe"
+                                    placeholder="Abdul Basith"
                                     value={formData.full_name}
                                     onChange={e => setFormData({ ...formData, full_name: e.target.value })}
                                 />

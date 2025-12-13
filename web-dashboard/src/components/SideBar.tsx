@@ -1,19 +1,29 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Radio, LayoutDashboard, MapPinned, Users, Settings, Database } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Radio, LayoutDashboard, MapPinned, Users, Settings, Database, LogOut } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 interface SidebarProps {
     activeView: string;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeView }) => {
+
+    const { signOut } = useAuth(); // Get signOut function
+    const navigate = useNavigate();
+
+    const handleLogout = async () => {
+        await signOut();
+        navigate('/login');
+    };
+
     const menuItems = [
         { id: 'dashboard', path: '/', icon: LayoutDashboard, label: 'Dashboard' },
         { id: 'requests', path: '/requests', icon: Database, label: 'All Requests' },
         { id: 'completed-requests', path: '/completed-requests', icon: Database, label: 'Completed Requests' },
-        { id: 'map', path: '/map', icon: MapPinned, label: 'Map View' },
+        // { id: 'map', path: '/map', icon: MapPinned, label: 'Map View' }
         { id: 'dispatchers', path: '/dispatchers', icon: Users, label: 'Dispatchers' },
-        { id: 'settings', path: '/settings', icon: Settings, label: 'Settings' }
+        // { id: 'settings', path: '/settings', icon: Settings, label: 'Settings' }
     ];
 
     return (
@@ -36,8 +46,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView }) => {
                         key={item.id}
                         to={item.path}
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${activeView === item.id
-                                ? 'bg-slate-600 text-white shadow-md shadow-red-900/30'
-                                : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                            ? 'bg-slate-600 text-white shadow-md shadow-red-900/30'
+                            : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
                             }`}
                     >
                         <item.icon className="w-5 h-5" />
@@ -46,9 +56,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView }) => {
                 ))}
             </nav>
 
+            {/* Logout Button */}
             <div className="p-4 border-t border-slate-800">
-                <div className="text-xs text-slate-500 font-mono">v2.4.1 • Secure Link</div>
+                <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:bg-slate-800 hover:text-red-400 transition-colors"
+                >
+                    <LogOut className="w-5 h-5" />
+                    <span className="font-medium">Sign Out</span>
+                </button>
             </div>
-        </div>
+
+        </div >
     );
 };
