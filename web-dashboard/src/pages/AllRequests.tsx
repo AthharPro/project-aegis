@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Pagination, ConfigProvider, theme } from 'antd';
-import { Search, Filter, MapPin, User, AlertCircle, Clock } from 'lucide-react';
+import { Search, Filter, MapPin, User, AlertCircle, Clock, Check, X } from 'lucide-react';
 import { useIncidents } from '../hooks/UseVictim';
 import { getSeverityConfig, getStatusConfig, formatTimestamp } from '../utils/helper';
 import type { Incident } from '../types';
@@ -12,17 +12,18 @@ const AllRequests: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const pageSize = 8;
 
   // --- NEW: Handle the 2-step Resolution Process ---
   const handleResolve = (id: string) => {
     // 1. Change to RESOLVED immediately (Visually shows green badge)
     updateStatus(id, 'RESOLVED');
-
+    setConfirmingId(null);
     // 2. Wait 10 Seconds, then change to COMPLETED (Removes from list)
     setTimeout(() => {
       updateStatus(id, 'COMPLETED');
-    }, 10000); // 10,000 milliseconds = 10 seconds
+    }, 2000); // 5,000 milliseconds = 5 seconds
   };
 
   // --- Filtering Logic ---
@@ -160,17 +161,46 @@ const AllRequests: React.FC = () => {
                           </span>
 
                           {/* Status Change / Action Button */}
-                          {incident.status === 'RESOLVED' ? (
-                            // If currently RESOLVED, show a static Green Badge (waiting to disappear)
-                            <span className="flex items-center gap-1.5 w-fit px-2 py-1 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 cursor-default">
-                              CLOSING...
-                            </span>
+
+                          {confirmingId === incident.id ? (
+                            // --- CONFIRMATION STATE ---
+                            <div className="flex items-center gap-2">
+
+
+                              {/* CONFIRM (RIGHT/YES) Button */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleResolve(incident.id); // Proceed with the update
+                                }}
+                                // Use flex, justify-center, and items-center on the button itself
+                                className="w-12 p-1 rounded-sm bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-sm flex items-center justify-center"
+                              >
+                                {/* The icon now just needs to be rendered, the parent centers it */}
+                                <Check size={14} />
+                              </button>
+
+                              {/* CANCEL (WRONG/NO) Button */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setConfirmingId(null); // Clear confirmation state
+                                }}
+                                className="w-12 p-1 rounded-sm bg-red-600 hover:bg-red-700 text-white transition-colors shadow-sm flex items-center justify-center"
+                              >
+                                <X size={14} /> {/* Wrong/X Icon */}
+                              </button>
+                            </div>
+
+                          ) : incident.status.toUpperCase() === 'RESOLVED' ? (
+                            " "
+
                           ) : (
-                            // If active, show a Clickable Action Button
+                            // --- INITIAL Active State (Show MARK RESOLVED button) ---
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleResolve(incident.id); // Call the 10s delay logic
+                                setConfirmingId(incident.id); // Set ID to enter confirmation mode
                               }}
                               className="flex items-center gap-1.5 w-fit px-3 py-1.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-600 hover:bg-emerald-600 hover:text-white hover:border-emerald-500 transition-all shadow-sm"
                             >

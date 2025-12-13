@@ -63,9 +63,7 @@ export const IncidentRow: React.FC<Props> = ({ incident, onUpdateStatus }) => {
 
         {/* RIGHT: The HQ Response (Interactive) */}
         <div className="w-full md:w-48 bg-slate-950/50 border-t md:border-t-0 md:border-l border-slate-800 p-4 flex flex-col justify-center gap-2">
-           <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-1">
-             <Radio size={10} /> HQ Status
-           </div>
+          
            
            {/* If we passed an update function, show a dropdown. Otherwise just show a badge */}
            {onUpdateStatus ? (
