@@ -22,10 +22,8 @@ const AllRequests: React.FC = () => {
 
   // --- NEW: Handle the 2-step Resolution Process ---
   const handleResolve = (id: string) => {
-    // 1. Change to RESOLVED immediately (Visually shows green badge)
     updateStatus(id, 'RESOLVED');
     setConfirmingId(null);
-    // 2. Wait 10 Seconds, then change to COMPLETED (Removes from list)
     setTimeout(() => {
       updateStatus(id, 'COMPLETED');
     }, 2000); // 5,000 milliseconds = 5 seconds
@@ -78,9 +76,10 @@ const AllRequests: React.FC = () => {
                   onChange={(e) => setSeverityFilter(e.target.value)}
                 >
                   <option value="all">All Severities</option>
-                  <option value="Critical">Critical (Lvl 4-5)</option>
-                  <option value="High">High (Lvl 3)</option>
-                  <option value="Moderate">Moderate (Lvl 2)</option>
+                  <option value="Critical">Critical (Lvl 5)</option>
+                  <option value="High">High (Lvl 4)</option>
+                  <option value="Moderate">Moderate (Lvl 3)</option>
+                  <option value="Minor">Minor (Lvl 2)</option>
                   <option value="Low">Low (Lvl 1)</option>
                 </select>
                 <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 w-3 h-3 pointer-events-none" />
