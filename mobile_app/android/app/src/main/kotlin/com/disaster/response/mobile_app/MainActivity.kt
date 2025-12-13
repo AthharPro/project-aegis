@@ -1,4 +1,4 @@
-package com.aegis.responder.mobile_app
+package com.disaster.response.mobile_app
 
 import io.flutter.embedding.android.FlutterActivity
 
