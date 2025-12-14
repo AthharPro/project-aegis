@@ -1,8 +1,8 @@
 import React from 'react';
 import { Activity, Wifi, WifiOff, Users, AlertTriangle, ShieldAlert } from 'lucide-react';
-import { useIncidents } from '../hooks/UseVictim'; 
+import { useIncidents } from '../hooks/UseVictim';
 import { StatCard } from '../components/StatCard';
-import { IncidentRow } from '../components/VictimRow'; 
+import { IncidentRow } from '../components/VictimRow';
 import { MapView } from '../components/MapView';
 
 const Dashboard: React.FC = () => {
@@ -11,13 +11,13 @@ const Dashboard: React.FC = () => {
   // --- Real-time Stats Calculation ---
   const stats = {
     totalReports: incidents.length + completedIncidents.length,
-    
+
     // Count "Critical" or "High" severity (Level 4 & 5)
     criticalIncidents: incidents.filter(i => i.severity >= 4).length,
-    
+
     // Sum of all victims from all incidents
     totalVictims: incidents.reduce((acc, curr) => acc + curr.victim_count, 0),
-    
+
     // Count active missions (anything not 'RESOLVED')
     activeMissions: incidents.filter(i => i.status !== 'RESOLVED').length
   };
@@ -57,42 +57,43 @@ const Dashboard: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-6">
-              
+
               {/* Stats Row */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <StatCard 
-                  icon={<ShieldAlert className="w-4 h-4" />} 
-                  label="Total Reports" 
-                  value={stats.totalReports} 
-                  trend="All Time" 
-                  color="text-slate-100" 
+                <StatCard
+                  icon={<ShieldAlert className="w-4 h-4" />}
+                  label="Total Reports"
+                  value={stats.totalReports}
+                  trend="All Time"
+                  color="text-slate-100"
                 />
-                <StatCard 
-                  icon={<AlertTriangle className="w-4 h-4" />} 
-                  label="Critical Incidents" 
-                  value={stats.criticalIncidents} 
-                  trend="Level 4-5 Severity" 
-                  color="text-red-500" 
+                <StatCard
+                  icon={<AlertTriangle className="w-4 h-4" />}
+                  label="Critical Incidents"
+                  value={stats.criticalIncidents}
+                  trend="Level 4-5 Severity"
+                  color="text-red-500"
                 />
-                <StatCard 
-                  icon={<Users className="w-4 h-4" />} 
-                  label="Total Victims" 
-                  value={stats.totalVictims} 
-                  trend="Confirmed on site" 
-                  color="text-amber-500" 
+                <StatCard
+                  icon={<Users className="w-4 h-4" />}
+                  label="Total Victims"
+                  // Round down to nearest 10 and add '+' (e.g., 156 -> 150+)
+                  value={`${Math.floor(stats.totalVictims / 10) * 10}+`}
+                  trend="Confirmed on site"
+                  color="text-amber-500"
                 />
-                <StatCard 
-                  icon={<Activity className="w-4 h-4" />} 
-                  label="Active Missions" 
-                  value={stats.activeMissions} 
-                  trend="Pending Resolution" 
-                  color="text-blue-500" 
+                <StatCard
+                  icon={<Activity className="w-4 h-4" />}
+                  label="Active Missions"
+                  value={stats.activeMissions}
+                  trend="Pending Resolution"
+                  color="text-blue-500"
                 />
               </div>
 
               {/* Main Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-280px)]">
-                
+
                 {/* Left: Live Incident Feed */}
                 <div className="bg-slate-900/50 border border-slate-800 rounded-lg overflow-hidden flex flex-col">
                   <div className="bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center">
@@ -104,7 +105,7 @@ const Dashboard: React.FC = () => {
                       {incidents.length} Events
                     </span>
                   </div>
-                  
+
                   <div className="flex-1 overflow-auto p-4 custom-scrollbar">
                     {incidents.length === 0 ? (
                       <div className="text-center text-slate-500 py-12 flex flex-col items-center">
@@ -113,9 +114,9 @@ const Dashboard: React.FC = () => {
                       </div>
                     ) : (
                       incidents.map(incident => (
-                        <IncidentRow 
-                          key={incident.id} 
-                          incident={incident} 
+                        <IncidentRow
+                          key={incident.id}
+                          incident={incident}
                           onUpdateStatus={updateStatus} // Pass the dispatch function
                         />
                       ))
@@ -125,9 +126,9 @@ const Dashboard: React.FC = () => {
 
                 {/* Right: Tactical Map */}
                 <div className="bg-slate-900/50 border border-slate-800 rounded-lg overflow-hidden flex flex-col">
-                   <div className="flex-1 relative">
-                      <MapView incidents={incidents} />
-                   </div>
+                  <div className="flex-1 relative">
+                    <MapView incidents={incidents} />
+                  </div>
                 </div>
 
               </div>
