@@ -304,7 +304,7 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
           
           // Page Indicator
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            padding: const EdgeInsets.symmetric(vertical: 10),
             child: _buildPageIndicator(),
           ),
           

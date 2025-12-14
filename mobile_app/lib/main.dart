@@ -10,7 +10,7 @@ import 'data/local/hive_service.dart';
 import 'data/remote/supabase_service.dart';
 import 'data/sync_service.dart';
 import 'core/secure_storage_adapter.dart';
-import 'presentation/screens/login_screen.dart';
+import 'presentation/screens/splash_screen.dart';
 
 import 'package:workmanager/workmanager.dart';
 import 'package:flutter/foundation.dart'; // for kIsWeb
@@ -80,7 +80,7 @@ class MyApp extends StatelessWidget {
       title: 'Disaster Responder',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const LoginScreen(),
+      home: const SplashScreen(),
     );
   }
 }
