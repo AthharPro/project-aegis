@@ -26,7 +26,7 @@ const getIconForSeverity = (severity: number) => {
 
 export const MapView: React.FC<{ incidents: Incident[] }> = ({ incidents }) => {
     // Default center (Colombo, Sri Lanka)
-    const defaultCenter: [number, number] = [6.9271, 79.8612];
+    const defaultCenter: [number, number] = [7.8731, 80.7718];
 
     // Calculate center based on first incident if available
     const center: [number, number] = incidents.length > 0
@@ -37,7 +37,7 @@ export const MapView: React.FC<{ incidents: Incident[] }> = ({ incidents }) => {
         <div className="h-full w-full rounded-lg overflow-hidden border border-slate-700 relative z-0">
             <MapContainer
                 center={center}
-                zoom={13}
+                zoom={8}
                 scrollWheelZoom={true}
                 style={{ height: '100%', width: '100%' }}
             >

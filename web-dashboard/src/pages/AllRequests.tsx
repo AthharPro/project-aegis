@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Pagination, ConfigProvider, theme } from 'antd';
-import { Search, Filter, MapPin, User, AlertCircle, Clock, Check, X, Camera, XCircle, Image as ImageIcon } from 'lucide-react';
+import { Search, Filter, MapPin, User, AlertCircle, Clock, Check, X, Image as ImageIcon } from 'lucide-react';
 import { useIncidentsPaginated } from '../hooks/UseIncidentsPaginated';
 import { getSeverityConfig, getStatusConfig, formatTimestamp, formatVictimCount } from '../utils/helper';
 import type { Incident } from '../types';

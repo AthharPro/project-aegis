@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, Clock, MapPin, AlertCircle, Camera, XCircle, Check } from 'lucide-react';
-import { getSeverityConfig, getStatusConfig } from '../utils/helper'; // Adjust path if needed
+import { getSeverityConfig, getStatusConfig } from '../utils/helper';
 import type { Incident } from '../types';
 
 interface IncidentModalProps {
@@ -12,12 +12,10 @@ interface IncidentModalProps {
 export const IncidentModal: React.FC<IncidentModalProps> = ({ incident, onClose, onResolve }) => {
     const [imageError, setImageError] = useState(false);
 
-    // Reset error state when a new incident opens
     useEffect(() => {
         if (incident) setImageError(false);
     }, [incident]);
 
-    // If no incident is selected, render nothing
     if (!incident) return null;
 
     return (
@@ -30,7 +28,6 @@ export const IncidentModal: React.FC<IncidentModalProps> = ({ incident, onClose,
                         <span className="text-lg font-bold text-white uppercase tracking-wide">
                             INCIDENT #{incident.id.slice(0, 8)}
                         </span>
-                        {/* Status Badge */}
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${getStatusConfig(incident.status).color} ${getStatusConfig(incident.status).bg} border-opacity-50`}>
                             {incident.status}
                         </span>
@@ -40,7 +37,7 @@ export const IncidentModal: React.FC<IncidentModalProps> = ({ incident, onClose,
                     </button>
                 </div>
 
-                {/* Modal Body (Scrollable) */}
+                {/* Modal Body */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
 
                     {/* 1. Image Section */}
@@ -65,8 +62,9 @@ export const IncidentModal: React.FC<IncidentModalProps> = ({ incident, onClose,
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-4 pt-12">
                             <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                                 {incident.incident_type}
+                                {/* UPDATED SEVERITY LABEL */}
                                 <span className={`text-xs px-2 py-1 rounded border ${getSeverityConfig(incident.severity).bg} ${getSeverityConfig(incident.severity).color} ${getSeverityConfig(incident.severity).border}`}>
-                                    SEVERITY LEVEL {incident.severity}
+                                    {getSeverityConfig(incident.severity).label}
                                 </span>
                             </h2>
                         </div>
@@ -74,7 +72,6 @@ export const IncidentModal: React.FC<IncidentModalProps> = ({ incident, onClose,
 
                     {/* 2. Details Grid */}
                     <div className="grid grid-cols-2 gap-6">
-                        {/* Left Col */}
                         <div className="space-y-4">
                             <div className="bg-slate-900/50 p-3 rounded border border-slate-800">
                                 <label className="text-[10px] uppercase font-bold text-slate-500 block mb-1">Reported By</label>
@@ -83,7 +80,6 @@ export const IncidentModal: React.FC<IncidentModalProps> = ({ incident, onClose,
                                     <span className="font-semibold">{incident.profiles?.full_name || 'Unknown Officer'}</span>
                                 </div>
                             </div>
-
                             <div className="bg-slate-900/50 p-3 rounded border border-slate-800">
                                 <label className="text-[10px] uppercase font-bold text-slate-500 block mb-1">Incident Time</label>
                                 <div className="flex items-center gap-2 text-slate-200">
@@ -93,7 +89,6 @@ export const IncidentModal: React.FC<IncidentModalProps> = ({ incident, onClose,
                             </div>
                         </div>
 
-                        {/* Right Col */}
                         <div className="space-y-4">
                             <div className="bg-slate-900/50 p-3 rounded border border-slate-800">
                                 <label className="text-[10px] uppercase font-bold text-slate-500 block mb-1">Exact Location</label>
@@ -102,7 +97,6 @@ export const IncidentModal: React.FC<IncidentModalProps> = ({ incident, onClose,
                                     <span className="font-mono">{incident.latitude.toFixed(6)}, {incident.longitude.toFixed(6)}</span>
                                 </div>
                             </div>
-
                             <div className="bg-slate-900/50 p-3 rounded border border-slate-800">
                                 <label className="text-[10px] uppercase font-bold text-slate-500 block mb-1">Victim Impact</label>
                                 <div className="flex items-center gap-2 text-slate-200">
@@ -114,7 +108,7 @@ export const IncidentModal: React.FC<IncidentModalProps> = ({ incident, onClose,
                     </div>
                 </div>
 
-                {/* Modal Footer (Actions) */}
+                {/* Modal Footer */}
                 <div className="p-4 border-t border-slate-800 bg-slate-950 flex justify-end gap-3">
                     <button
                         onClick={onClose}
@@ -122,7 +116,6 @@ export const IncidentModal: React.FC<IncidentModalProps> = ({ incident, onClose,
                     >
                         CLOSE
                     </button>
-
                     {incident.status !== 'RESOLVED' && incident.status !== 'COMPLETED' && (
                         <button
                             onClick={() => onResolve(incident.id)}

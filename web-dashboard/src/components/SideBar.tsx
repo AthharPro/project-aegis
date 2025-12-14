@@ -21,8 +21,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView }) => {
         { id: 'dashboard', path: '/', icon: LayoutDashboard, label: 'Dashboard' },
         { id: 'requests', path: '/requests', icon: Database, label: 'All Requests' },
         { id: 'completed-requests', path: '/completed-requests', icon: Database, label: 'Completed Requests' },
+
         // { id: 'map', path: '/map', icon: MapPinned, label: 'Map View' }
         { id: 'dispatchers', path: '/dispatchers', icon: Users, label: 'Dispatchers' },
+        { id: 'mission-command', path: '/mission-command', icon: Radio, label: 'Full Map' },
         // { id: 'settings', path: '/settings', icon: Settings, label: 'Settings' }
     ];
 
@@ -34,8 +36,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView }) => {
                         <Radio className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                        <div className="font-bold text-lg tracking-tight">HQ COMMAND</div>
-                        <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Rescue Ops</div>
+                        <div className="font-bold text-lg tracking-tight">HEAD QUARTERS</div>
+                        <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">RescueGo</div>
                     </div>
                 </div>
             </div>
