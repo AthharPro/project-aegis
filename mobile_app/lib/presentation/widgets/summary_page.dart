@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:io';
 import '../../data/models/incident_model.dart';
 
 class SummaryPage extends StatelessWidget {
@@ -24,8 +26,12 @@ class SummaryPage extends StatelessWidget {
     required this.onEditType,
     required this.onEditSeverity,
     required this.onEditVictimCount,
+
     required this.onCancel,
+    this.imagePath,
   });
+
+  final String? imagePath;
 
   @override
   Widget build(BuildContext context) {
@@ -78,6 +84,43 @@ class SummaryPage extends StatelessWidget {
             icon: Icons.people,
             onEdit: onEditVictimCount,
           ),
+          const SizedBox(height: 12),
+
+          if (imagePath != null)
+            Card(
+              elevation: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Attached Image',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.grey[600],
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: SizedBox(
+                        height: 200,
+                        width: double.infinity,
+                        child: kIsWeb
+                            ? Image.network(
+                                imagePath!,
+                                fit: BoxFit.cover,
+                              )
+                            : Image.file(
+                                File(imagePath!),
+                                fit: BoxFit.cover,
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
           const Spacer(),
 

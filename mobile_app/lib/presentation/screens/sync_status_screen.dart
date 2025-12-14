@@ -245,25 +245,39 @@ class _SyncStatusScreenState extends State<SyncStatusScreen> {
                                   ],
                                 ),
                                 const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: _getSeverityColor(incident.severity).withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        _getSeverityLabel(incident.severity),
-                                        style: TextStyle(
-                                          color: _getSeverityColor(incident.severity),
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: _getSeverityColor(incident.severity).withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(4),
                                         ),
+                                        child: Text(
+                                          _getSeverityLabel(incident.severity),
+                                          style: TextStyle(
+                                            color: _getSeverityColor(incident.severity),
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  if (incident.supabaseImageUrl != null && incident.supabaseImageUrl!.isNotEmpty) ...[
+                                    const SizedBox(height: 8),
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.network(
+                                        incident.supabaseImageUrl!,
+                                        height: 120,
+                                        width: double.infinity,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) =>
+                                            const SizedBox(height: 0),
                                       ),
                                     ),
                                   ],
-                                ),
                               ],
                             ),
                             trailing: Column(
