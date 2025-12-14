@@ -162,13 +162,7 @@ class _LoginScreenState extends State<LoginScreen> {
                      : const Text('LOGIN'),
                 ),
               ),
-              const SizedBox(height: 12),
               
-              // Sign Up Button
-              TextButton(
-                onPressed: _isLoading ? null : _signUp,
-                child: const Text('Create New Account'),
-              ),
               
               const SizedBox(height: 16),
               

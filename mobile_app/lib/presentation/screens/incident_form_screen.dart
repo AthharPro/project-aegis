@@ -9,7 +9,7 @@ import '../../data/models/incident_model.dart';
 import '../../data/sync_service.dart';
 import '../widgets/offline_status_banner.dart';
 import 'sync_status_screen.dart';
-import 'local_data_screen.dart';
+
 import 'login_screen.dart';
 import '../../data/remote/supabase_service.dart';
 import '../widgets/incident_type_page.dart';
@@ -103,28 +103,18 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
 
   void _nextPage() {
     if (_currentPage < 3) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+      _pageController.jumpToPage(_currentPage + 1);
     }
   }
 
   void _previousPage() {
     if (_currentPage > 0) {
-      _pageController.previousPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+      _pageController.jumpToPage(_currentPage - 1);
     }
   }
 
   void _goToPage(int page) {
-    _pageController.animateToPage(
-      page,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+    _pageController.jumpToPage(page);
   }
 
   Future<void> _submitReport() async {
@@ -201,7 +191,17 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('New Incident'),
+        centerTitle: false,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+             
+            Text(
+              _supabaseService.currentUser?.userMetadata?['full_name'] ?? 'Responder',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.cloud_sync),
@@ -210,21 +210,35 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
               MaterialPageRoute(builder: (_) => const SyncStatusScreen()),
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.storage),
-            tooltip: 'View Hive Data',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const LocalDataScreen()),
-            ),
-          ),
+
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
-              await _supabaseService.signOut();
-              if (mounted) {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                );
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Logout'),
+                  content: const Text('Are you sure you want to logout?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('CANCEL'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('LOGOUT'),
+                    ),
+                  ],
+                ),
+              );
+
+              if (confirmed == true) {
+                await _supabaseService.signOut();
+                if (mounted) {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  );
+                }
               }
             },
           ),
@@ -253,18 +267,14 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
                   selectedType: _selectedType,
                   onTypeSelected: (type) {
                     setState(() => _selectedType = type);
-                    Future.delayed(const Duration(milliseconds: 300), () {
-                      _nextPage();
-                    });
+                    _nextPage();
                   },
                 ),
                 SeverityPage(
                   severity: _severity,
                   onSeveritySelected: (level) {
                     setState(() => _severity = level);
-                    Future.delayed(const Duration(milliseconds: 300), () {
-                      _nextPage();
-                    });
+                    _nextPage();
                   },
                   onBack: _previousPage,
                 ),
@@ -272,9 +282,7 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
                   victimCountInput: _victimCountInput,
                   onVictimCountSelected: (value) {
                     setState(() => _victimCountInput = value);
-                    Future.delayed(const Duration(milliseconds: 300), () {
-                      _nextPage();
-                    });
+                    _nextPage();
                   },
                   onBack: _previousPage,
                 ),
@@ -288,6 +296,7 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
                   onEditType: () => _goToPage(0),
                   onEditSeverity: () => _goToPage(1),
                   onEditVictimCount: () => _goToPage(2),
+                  onCancel: () => _goToPage(0),
                 ),
               ],
             ),
