@@ -80,8 +80,8 @@ const Login: React.FC = () => {
                     <div className="w-16 h-16 bg-red-900 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-red-900/20">
                         <Shield className="w-8 h-8 text-white" />
                     </div>
-                    <h1 className="text-2xl font-bold text-white tracking-tight">HQ COMMAND</h1>
-                    <p className="text-slate-500 text-sm mt-2">Secure Access Terminal</p>
+                    <h1 className="text-2xl font-bold text-white tracking-tight">HQ LOGIN</h1>
+                    <p className="text-slate-500 text-sm mt-2">RescueGo</p>
                 </div>
 
                 {/* Form */}
@@ -102,7 +102,7 @@ const Login: React.FC = () => {
                                     type="email"
                                     required
                                     className="w-full bg-slate-950 border border-slate-700 rounded-lg py-2.5 pl-10 pr-4 text-slate-200 focus:outline-none focus:border-red-500 transition-colors"
-                                    placeholder="commander@hq.mil"
+                                    placeholder="Enter your email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                 />

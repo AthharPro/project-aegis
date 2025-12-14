@@ -2,15 +2,15 @@ export type IncidentStatus = 'PENDING' | 'RESOLVED' | 'COMPLETED' ;
 
 export interface Incident {
   id: string;
-  user_id: string; // Links to the officer
-  incident_type: string; // e.g., 'Fire', 'Accident', 'Flood'
-  severity: number; // 1 = Low, 2 = Medium, 3 = High/Critical
+  user_id: string;
+  incident_type: string; 
+  severity: number;
   incident_time: string;
   victim_count: number;
   latitude: number;
   longitude: number;
   image_url: string | null;
-  status: string; // 'OPEN', 'RESOLVED', etc.
+  status: string;
   created_at: string;
   
   // This comes from the JOIN with the profiles table
