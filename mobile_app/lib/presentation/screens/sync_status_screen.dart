@@ -31,6 +31,37 @@ class _SyncStatusScreenState extends State<SyncStatusScreen> {
     _loadIncidents();
   }
 
+  Future<void> _confirmClearHistory() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear History?'),
+        content: const Text('This will delete all local history of your reports. This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('CANCEL'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('CLEAR ALL'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _hiveService.clearAll();
+      _loadIncidents();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('History cleared')),
+        );
+      }
+    }
+  }
+
   IconData _getIncidentIcon(IncidentType type) {
     switch (type) {
       case IncidentType.landslide:
@@ -66,7 +97,7 @@ class _SyncStatusScreenState extends State<SyncStatusScreen> {
       case 3:
         return 'Moderate';
       case 4:
-        return 'Severe';
+        return 'High';
       case 5:
         return 'Critical';
       default:
@@ -93,216 +124,188 @@ class _SyncStatusScreenState extends State<SyncStatusScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final pendingCount = _allIncidents.where((i) => !i.synced).length;
+
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('Sync Status'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        title: const Text('Report History'),
+        centerTitle: true,
+        elevation: 0,
+        actions: [
+          if (_allIncidents.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.delete_sweep),
+              tooltip: 'Clear History',
+              onPressed: _confirmClearHistory,
+            ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: _refresh,
-        child: _allIncidents.isEmpty
-            ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.cloud_done,
-                      size: 80,
-                      color: Colors.grey[400],
+        child: Column(
+          children: [
+            // Status Header
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              color: pendingCount > 0 ? Colors.orange[50] : Colors.green[50],
+              child: Row(
+                children: [
+                   Icon(
+                    pendingCount > 0 ? Icons.sync_problem : Icons.check_circle,
+                    color: pendingCount > 0 ? Colors.orange : Colors.green,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    pendingCount > 0 
+                      ? '$pendingCount reports waiting to sync'
+                      : 'All reports synced',
+                    style: TextStyle(
+                      color: pendingCount > 0 ? Colors.orange[800] : Colors.green[800],
+                      fontWeight: FontWeight.bold,
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No incidents reported yet',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: Colors.grey[600],
-                          ),
-                    ),
-                  ],
-                ),
-              )
-            : ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: _allIncidents.length,
-                itemBuilder: (context, index) {
-                  final incident = _allIncidents[index];
-                  final dateFormat = DateFormat('MMM dd, yyyy • hh:mm a');
-
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    elevation: 2,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
+                  ),
+                ],
+              ),
+            ),
+            
+            Expanded(
+              child: _allIncidents.isEmpty
+                  ? Center(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          // Header Row
-                          Row(
-                            children: [
-                              // Incident Icon
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).primaryColor.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Icon(
-                                  _getIncidentIcon(incident.type),
-                                  color: Theme.of(context).primaryColor,
-                                  size: 28,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              
-                              // Incident Type and Time
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      _getIncidentLabel(incident.type),
-                                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      dateFormat.format(incident.createdAt.toLocal()),
-                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                            color: Colors.grey[600],
-                                          ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              
-                              // Sync Status Icon
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: incident.synced
-                                      ? Colors.green.withOpacity(0.1)
-                                      : Colors.orange.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Icon(
-                                  incident.synced
-                                      ? Icons.cloud_done
-                                      : Icons.cloud_upload,
-                                  color: incident.synced ? Colors.green : Colors.orange,
-                                  size: 24,
-                                ),
-                              ),
-                            ],
+                          Icon(
+                            Icons.history,
+                            size: 64,
+                            color: Colors.grey[300],
                           ),
-                          
                           const SizedBox(height: 16),
-                          const Divider(height: 1),
-                          const SizedBox(height: 16),
-                          
-                          // Details Row
-                          Row(
-                            children: [
-                              // Severity
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Severity',
-                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                            color: Colors.grey[600],
-                                          ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: _getSeverityColor(incident.severity).withOpacity(0.2),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Text(
-                                        _getSeverityLabel(incident.severity),
-                                        style: TextStyle(
-                                          color: _getSeverityColor(incident.severity),
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                          Text(
+                            'No reports history',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: Colors.grey[600],
                                 ),
-                              ),
-                              
-                              // Victim Count
-                              if (incident.victimCount != null)
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Victims',
-                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                              color: Colors.grey[600],
-                                            ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Row(
-                                        children: [
-                                          const Icon(
-                                            Icons.people,
-                                            size: 18,
-                                            color: Colors.grey,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            '${incident.victimCount}',
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                            ],
-                          ),
-                          
-                          const SizedBox(height: 12),
-                          
-                          // Sync Status Text
-                          Row(
-                            children: [
-                              Icon(
-                                incident.synced ? Icons.check_circle : Icons.schedule,
-                                size: 16,
-                                color: incident.synced ? Colors.green : Colors.orange,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                incident.synced
-                                    ? 'Synced to cloud'
-                                    : 'Stored locally - pending sync',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: incident.synced ? Colors.green : Colors.orange,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                              ),
-                            ],
                           ),
                         ],
                       ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _allIncidents.length,
+                      itemBuilder: (context, index) {
+                        final incident = _allIncidents[index];
+                        final dateFormat = DateFormat('MMM dd, hh:mm a');
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                            border: Border.all(
+                              color: incident.synced ? Colors.transparent : Colors.orange.withOpacity(0.3),
+                            )
+                          ),
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).primaryColor.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                _getIncidentIcon(incident.type),
+                                color: Theme.of(context).primaryColor,
+                              ),
+                            ),
+                            title: Text(
+                              _getIncidentLabel(incident.type),
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Icon(Icons.access_time, size: 14, color: Colors.grey[600]),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      dateFormat.format(incident.createdAt.toLocal()),
+                                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: _getSeverityColor(incident.severity).withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          _getSeverityLabel(incident.severity),
+                                          style: TextStyle(
+                                            color: _getSeverityColor(incident.severity),
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  if (incident.supabaseImageUrl != null && incident.supabaseImageUrl!.isNotEmpty) ...[
+                                    const SizedBox(height: 8),
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.network(
+                                        incident.supabaseImageUrl!,
+                                        height: 120,
+                                        width: double.infinity,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) =>
+                                            const SizedBox(height: 0),
+                                      ),
+                                    ),
+                                  ],
+                              ],
+                            ),
+                            trailing: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  incident.synced ? Icons.cloud_done : Icons.cloud_upload,
+                                  color: incident.synced ? Colors.green : Colors.orange,
+                                  size: 20,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  incident.synced ? 'Synced' : 'Pending',
+                                  style: TextStyle(
+                                    color: incident.synced ? Colors.green : Colors.orange,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
+            ),
+          ],
+        ),
       ),
     );
   }

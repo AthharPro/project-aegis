@@ -48,7 +48,7 @@ class SeverityPage extends StatelessWidget {
                 const SizedBox(height: 10),
                 _buildSeverityTile(
                   level: 4,
-                  label: 'Severe',
+                  label: 'High',
                   icon: Icons.error_outline,
                   color: Colors.deepOrange,
                 ),

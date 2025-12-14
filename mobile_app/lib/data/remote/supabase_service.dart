@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseService {
@@ -39,6 +41,29 @@ class SupabaseService {
       // In a real app, log error to Crashlytics
       print('Sync Error: $e');
       return false;
+    }
+  }
+
+  // Upload Image to Storage
+  // Returns public URL if successful, null otherwise
+  // Upload Image Bytes to Storage (works for Web & Mobile)
+  // Returns public URL if successful, null otherwise
+  Future<String?> uploadImageBytes(Uint8List bytes, String fileName) async {
+    try {
+      const bucketName = 'incident_images';
+      final path = 'uploads/$fileName';
+      
+      await _client.storage.from(bucketName).uploadBinary(
+        path,
+        bytes,
+        fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
+      );
+
+      final publicUrl = _client.storage.from(bucketName).getPublicUrl(path);
+      return publicUrl;
+    } catch (e) {
+      print('Image Upload Error: $e');
+      return null;
     }
   }
 

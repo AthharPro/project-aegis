@@ -18,6 +18,27 @@ class IncidentTypePage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Simple Header
+          Row(
+            children: [
+              Icon(
+                Icons.warning_amber_rounded,
+                size: 40,
+                color: Theme.of(context).primaryColor,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Report Incident',
+                style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                  fontSize: 32,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          
           Text(
             'Select Incident Type',
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -26,7 +47,7 @@ class IncidentTypePage extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Choose the type of emergency you are reporting',
+            'Select the type of the incident to report',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: Colors.grey[600],
                 ),

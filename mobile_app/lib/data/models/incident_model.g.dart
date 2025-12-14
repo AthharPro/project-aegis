@@ -22,7 +22,8 @@ class IncidentModelAdapter extends TypeAdapter<IncidentModel> {
       severity: fields[2] as int,
       latitude: fields[3] as double,
       longitude: fields[4] as double,
-      imagePath: fields[5] as String?,
+      localImagePath: fields[5] as String?,
+      supabaseImageUrl: fields[11] as String?,
       createdAt: fields[6] as DateTime,
       synced: fields[7] as bool,
       userId: fields[8] as String,
@@ -34,7 +35,7 @@ class IncidentModelAdapter extends TypeAdapter<IncidentModel> {
   @override
   void write(BinaryWriter writer, IncidentModel obj) {
     writer
-      ..writeByte(11)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -46,7 +47,9 @@ class IncidentModelAdapter extends TypeAdapter<IncidentModel> {
       ..writeByte(4)
       ..write(obj.longitude)
       ..writeByte(5)
-      ..write(obj.imagePath)
+      ..write(obj.localImagePath)
+      ..writeByte(11)
+      ..write(obj.supabaseImageUrl)
       ..writeByte(6)
       ..write(obj.createdAt)
       ..writeByte(7)

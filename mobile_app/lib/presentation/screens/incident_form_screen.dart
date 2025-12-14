@@ -9,12 +9,19 @@ import '../../data/models/incident_model.dart';
 import '../../data/sync_service.dart';
 import '../widgets/offline_status_banner.dart';
 import 'sync_status_screen.dart';
-import 'local_data_screen.dart';
+
 import 'login_screen.dart';
 import '../../data/remote/supabase_service.dart';
+import 'dart:io';
+import 'package:camera/camera.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+
 import '../widgets/incident_type_page.dart';
 import '../widgets/severity_page.dart';
 import '../widgets/victim_count_page.dart';
+import '../widgets/image_capture_page.dart';
 import '../widgets/summary_page.dart';
 
 class IncidentFormScreen extends StatefulWidget {
@@ -29,7 +36,10 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
   final _networkUtils = GetIt.I<NetworkUtils>();
   final _syncService = GetIt.I<SyncService>();
   final _supabaseService = GetIt.I<SupabaseService>();
-  final PageController _pageController = PageController();
+  final _pageController = PageController();
+  
+  List<CameraDescription> _cameras = [];
+  String? _capturedImagePath;
 
   int _currentPage = 0;
   IncidentType? _selectedType;
@@ -45,6 +55,8 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     
+    _initializeCameras();
+
     // Start Live Location Tracking (Non-blocking)
     if (!kIsWeb) {
       Geolocator.getPositionStream(
@@ -65,6 +77,15 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
     });
     _checkInitialConnection();
     _requestPermission();
+  }
+
+  Future<void> _initializeCameras() async {
+    try {
+      final cameras = await availableCameras();
+      if (mounted) setState(() => _cameras = cameras);
+    } catch (e) {
+      debugPrint('Error initializing cameras: $e');
+    }
   }
 
   @override
@@ -101,30 +122,49 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
     }
   }
 
-  void _nextPage() {
-    if (_currentPage < 3) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
+  Future<void> _processImage(String? rawPath) async {
+    if (rawPath == null) return;
+    
+    // On Web, skip compression and file system operations
+    if (kIsWeb) {
+      setState(() => _capturedImagePath = rawPath);
+      return;
+    }
+
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final targetPath = p.join(dir.path, 'incident_${DateTime.now().millisecondsSinceEpoch}.jpg');
+      
+      var result = await FlutterImageCompress.compressAndGetFile(
+        rawPath,
+        targetPath,
+        minHeight: 1080,
+        minWidth: 1080,
+        quality: 85,
       );
+
+      if (result != null) {
+        setState(() => _capturedImagePath = result.path);
+      }
+    } catch (e) {
+      debugPrint('Error compressing image: $e');
+    }
+  }
+
+  void _nextPage() {
+    if (_currentPage < 4) {
+      _pageController.jumpToPage(_currentPage + 1);
     }
   }
 
   void _previousPage() {
     if (_currentPage > 0) {
-      _pageController.previousPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+      _pageController.jumpToPage(_currentPage - 1);
     }
   }
 
   void _goToPage(int page) {
-    _pageController.animateToPage(
-      page,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+    _pageController.jumpToPage(page);
   }
 
   Future<void> _submitReport() async {
@@ -136,12 +176,15 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
         finalPosition = await Geolocator.getLastKnownPosition();
       }
       
+      debugPrint('Submitting report. Captured Image Path: $_capturedImagePath');
+
       final incident = IncidentModel(
         id: const Uuid().v4(),
         type: _selectedType!,
         severity: _severity,
         latitude: finalPosition?.latitude ?? 0.0,
         longitude: finalPosition?.longitude ?? 0.0,
+        localImagePath: _capturedImagePath,
         createdAt: DateTime.now(),
         synced: false,
         userId: _supabaseService.currentUser?.id ?? '',
@@ -164,6 +207,7 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
           _severity = 3;
           _selectedType = null;
           _victimCountInput = '';
+          _capturedImagePath = null;
           _currentPage = 0;
         });
         _pageController.jumpToPage(0);
@@ -181,7 +225,7 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
   Widget _buildPageIndicator() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(4, (index) {
+      children: List.generate(5, (index) {
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 4),
           width: 10,
@@ -201,7 +245,17 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('New Incident'),
+        centerTitle: false,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+             
+            Text(
+              _supabaseService.currentUser?.userMetadata?['full_name'] ?? 'Responder',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.cloud_sync),
@@ -210,21 +264,35 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
               MaterialPageRoute(builder: (_) => const SyncStatusScreen()),
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.storage),
-            tooltip: 'View Hive Data',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const LocalDataScreen()),
-            ),
-          ),
+
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
-              await _supabaseService.signOut();
-              if (mounted) {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                );
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Logout'),
+                  content: const Text('Are you sure you want to logout?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('CANCEL'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('LOGOUT'),
+                    ),
+                  ],
+                ),
+              );
+
+              if (confirmed == true) {
+                await _supabaseService.signOut();
+                if (mounted) {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  );
+                }
               }
             },
           ),
@@ -253,18 +321,14 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
                   selectedType: _selectedType,
                   onTypeSelected: (type) {
                     setState(() => _selectedType = type);
-                    Future.delayed(const Duration(milliseconds: 300), () {
-                      _nextPage();
-                    });
+                    _nextPage();
                   },
                 ),
                 SeverityPage(
                   severity: _severity,
                   onSeveritySelected: (level) {
                     setState(() => _severity = level);
-                    Future.delayed(const Duration(milliseconds: 300), () {
-                      _nextPage();
-                    });
+                    _nextPage();
                   },
                   onBack: _previousPage,
                 ),
@@ -272,9 +336,19 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
                   victimCountInput: _victimCountInput,
                   onVictimCountSelected: (value) {
                     setState(() => _victimCountInput = value);
-                    Future.delayed(const Duration(milliseconds: 300), () {
-                      _nextPage();
-                    });
+                    _nextPage();
+                  },
+                  onBack: _previousPage,
+                ),
+                ImageCapturePage(
+                  cameras: _cameras,
+                  onImageCaptured: (path) async {
+                     await _processImage(path);
+                     _nextPage();
+                  },
+                  onSkip: () {
+                    setState(() => _capturedImagePath = null);
+                    _nextPage();
                   },
                   onBack: _previousPage,
                 ),
@@ -288,6 +362,8 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
                   onEditType: () => _goToPage(0),
                   onEditSeverity: () => _goToPage(1),
                   onEditVictimCount: () => _goToPage(2),
+                  onCancel: () => _goToPage(0),
+                  imagePath: _capturedImagePath,
                 ),
               ],
             ),

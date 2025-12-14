@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:io';
 import '../../data/models/incident_model.dart';
 
 class SummaryPage extends StatelessWidget {
@@ -11,6 +13,7 @@ class SummaryPage extends StatelessWidget {
   final VoidCallback onEditType;
   final VoidCallback onEditSeverity;
   final VoidCallback onEditVictimCount;
+  final VoidCallback onCancel;
 
   const SummaryPage({
     super.key,
@@ -23,7 +26,12 @@ class SummaryPage extends StatelessWidget {
     required this.onEditType,
     required this.onEditSeverity,
     required this.onEditVictimCount,
+
+    required this.onCancel,
+    this.imagePath,
   });
+
+  final String? imagePath;
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +50,7 @@ class SummaryPage extends StatelessWidget {
           Text(
             'Please review your incident report',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Colors.grey[600],
+                  color: Colors.green[600],
                 ),
           ),
           const SizedBox(height: 16),
@@ -76,6 +84,43 @@ class SummaryPage extends StatelessWidget {
             icon: Icons.people,
             onEdit: onEditVictimCount,
           ),
+          const SizedBox(height: 12),
+
+          if (imagePath != null)
+            Card(
+              elevation: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Attached Image',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.grey[600],
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: SizedBox(
+                        height: 200,
+                        width: double.infinity,
+                        child: kIsWeb
+                            ? Image.network(
+                                imagePath!,
+                                fit: BoxFit.cover,
+                              )
+                            : Image.file(
+                                File(imagePath!),
+                                fit: BoxFit.cover,
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
           const Spacer(),
 
@@ -85,6 +130,10 @@ class SummaryPage extends StatelessWidget {
             height: 56,
             child: ElevatedButton(
               onPressed: isLoading ? null : onSubmit,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+              ),
               child: isLoading
                   ? const SizedBox(
                       height: 24,
@@ -95,6 +144,21 @@ class SummaryPage extends StatelessWidget {
                       ),
                     )
                   : const Text('SUBMIT REPORT'),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+          
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: OutlinedButton(
+              onPressed: onCancel,
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                side: BorderSide(color: Theme.of(context).primaryColor),
+              ),
+              child: const Text('CANCEL'),
             ),
           ),
 
@@ -209,7 +273,7 @@ class SummaryPage extends StatelessWidget {
       case 3:
         return 'Moderate';
       case 4:
-        return 'Severe';
+        return 'High';
       case 5:
         return 'Critical';
       default:
