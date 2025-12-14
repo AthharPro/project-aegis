@@ -363,6 +363,7 @@ class _IncidentFormScreenState extends State<IncidentFormScreen> with WidgetsBin
                   onEditSeverity: () => _goToPage(1),
                   onEditVictimCount: () => _goToPage(2),
                   onCancel: () => _goToPage(0),
+                  imagePath: _capturedImagePath,
                 ),
               ],
             ),
