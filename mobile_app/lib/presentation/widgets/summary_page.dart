@@ -53,7 +53,7 @@ class SummaryPage extends StatelessWidget {
                   color: Colors.green[600],
                 ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
 
           // Summary Cards
           _buildSummaryCard(
@@ -63,7 +63,7 @@ class SummaryPage extends StatelessWidget {
             icon: _getIncidentIcon(selectedType ?? IncidentType.landslide),
             onEdit: onEditType,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
 
           _buildSummaryCard(
             context,
@@ -73,7 +73,7 @@ class SummaryPage extends StatelessWidget {
             color: _getSeverityColor(severity),
             onEdit: onEditSeverity,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
 
           _buildSummaryCard(
             context,
@@ -84,7 +84,7 @@ class SummaryPage extends StatelessWidget {
             icon: Icons.people,
             onEdit: onEditVictimCount,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
 
           if (imagePath != null)
             Card(
@@ -124,45 +124,48 @@ class SummaryPage extends StatelessWidget {
 
           const Spacer(),
 
-          // Submit Button
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton(
-              onPressed: isLoading ? null : onSubmit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 56,
+                  child: OutlinedButton(
+                    onPressed: onCancel,
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: Theme.of(context).primaryColor),
+                      foregroundColor: Theme.of(context).primaryColor,
+                    ),
+                    child: const Text('CANCEL', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
               ),
-              child: isLoading
-                  ? const SizedBox(
-                      height: 24,
-                      width: 24,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 3,
-                      ),
-                    )
-                  : const Text('SUBMIT REPORT'),
-            ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: SizedBox(
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: isLoading ? null : onSubmit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: isLoading
+                        ? const SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 3,
+                            ),
+                          )
+                        : const Text('SUBMIT', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ),
+            ],
           ),
 
-          const SizedBox(height: 16),
-          
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: OutlinedButton(
-              onPressed: onCancel,
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                side: BorderSide(color: Theme.of(context).primaryColor),
-              ),
-              child: const Text('CANCEL'),
-            ),
-          ),
-
-          const SizedBox(height: 12),
+          // const SizedBox(height: 12),
 
           if (!isConnected)
             Center(
