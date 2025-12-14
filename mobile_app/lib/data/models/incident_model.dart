@@ -33,7 +33,10 @@ class IncidentModel extends HiveObject with EquatableMixin {
   final double longitude;
 
   @HiveField(5)
-  final String? imagePath;
+  String? localImagePath;
+
+  @HiveField(11)
+  String? supabaseImageUrl;
 
   @HiveField(6)
   final DateTime createdAt;
@@ -56,7 +59,8 @@ class IncidentModel extends HiveObject with EquatableMixin {
     required this.severity,
     required this.latitude,
     required this.longitude,
-    this.imagePath,
+    this.localImagePath,
+    this.supabaseImageUrl,
     required this.createdAt,
     this.synced = false,
     required this.userId,
@@ -65,7 +69,7 @@ class IncidentModel extends HiveObject with EquatableMixin {
   });
 
   @override
-  List<Object?> get props => [id, type, severity, latitude, longitude, imagePath, createdAt, synced, userId, victimCount, status];
+  List<Object?> get props => [id, type, severity, latitude, longitude, localImagePath, supabaseImageUrl, createdAt, synced, userId, victimCount, status];
 
   Map<String, dynamic> toSupabaseMap() {
     String typeStr;
@@ -85,7 +89,7 @@ class IncidentModel extends HiveObject with EquatableMixin {
       'victim_count': victimCount,
       'latitude': latitude,
       'longitude': longitude,
-      'image_url': imagePath, // Mapping local path to image_url for now as requested "null or string"
+      'image_url': supabaseImageUrl, // Send cloud URL to DB
       'status': status, // User specified "Status" capitalized
     };
   }
