@@ -53,7 +53,7 @@ class SummaryPage extends StatelessWidget {
                   color: Colors.green[600],
                 ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 2),
 
           // Summary Cards
           _buildSummaryCard(
@@ -63,7 +63,7 @@ class SummaryPage extends StatelessWidget {
             icon: _getIncidentIcon(selectedType ?? IncidentType.landslide),
             onEdit: onEditType,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 2),
 
           _buildSummaryCard(
             context,
@@ -73,7 +73,7 @@ class SummaryPage extends StatelessWidget {
             color: _getSeverityColor(severity),
             onEdit: onEditSeverity,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 2),
 
           _buildSummaryCard(
             context,
@@ -84,7 +84,7 @@ class SummaryPage extends StatelessWidget {
             icon: Icons.people,
             onEdit: onEditVictimCount,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 2),
 
           if (imagePath != null)
             Card(
@@ -100,11 +100,11 @@ class SummaryPage extends StatelessWidget {
                             color: Colors.grey[600],
                           ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 2),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: SizedBox(
-                        height: 200,
+                        height: 160,
                         width: double.infinity,
                         child: kIsWeb
                             ? Image.network(
@@ -165,7 +165,7 @@ class SummaryPage extends StatelessWidget {
             ],
           ),
 
-          // const SizedBox(height: 12),
+          const SizedBox(height: 2),
 
           if (!isConnected)
             Center(
