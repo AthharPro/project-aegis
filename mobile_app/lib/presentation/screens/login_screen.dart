@@ -102,7 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
               
               // Title
               Text(
-                'Emergency Response',
+                'Rescue Go',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   color: Theme.of(context).primaryColor,
