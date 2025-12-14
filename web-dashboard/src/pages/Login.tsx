@@ -97,7 +97,7 @@ const Login: React.FC = () => {
                         <div className="space-y-1">
                             <label className="text-xs font-bold text-slate-500 uppercase">Official Email</label>
                             <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />    
                                 <input
                                     type="email"
                                     required
