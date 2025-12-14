@@ -1,1 +1,18 @@
 @import "tailwindcss";
+
+.mission-popup .leaflet-popup-content-wrapper {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+
+.mission-popup .leaflet-popup-tip {
+  background: transparent !important; /* Hides the white arrow tip */
+  box-shadow: none !important;
+}
+
+.mission-popup .leaflet-popup-content {
+  margin: 0 !important;
+  width: auto !important;
+}

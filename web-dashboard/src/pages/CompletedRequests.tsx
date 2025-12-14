@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Pagination, ConfigProvider, theme } from 'antd';
-import { Search, Filter, MapPin, User, AlertCircle, Clock} from 'lucide-react';
+import { Search, Filter, MapPin, User, AlertCircle, Clock } from 'lucide-react';
 import { useIncidents } from '../hooks/UseVictim';
 import { getSeverityConfig, getStatusConfig, formatTimestamp, formatVictimCount } from '../utils/helper';
 import type { Incident } from '../types';
@@ -26,10 +26,11 @@ const AllRequests: React.FC = () => {
                 `${incident.latitude}, ${incident.longitude}`.includes(searchLower);
 
             let matchesSeverity = true;
-            if (severityFilter !== 'all') {
-                if (severityFilter === 'Critical') matchesSeverity = incident.severity >= 4;
-                else if (severityFilter === 'High') matchesSeverity = incident.severity === 3;
-                else if (severityFilter === 'Moderate') matchesSeverity = incident.severity === 2;
+            if (severityFilter && severityFilter !== 'all') {
+                if (severityFilter === 'Critical') matchesSeverity = incident.severity >= 5;
+                else if (severityFilter === 'High') matchesSeverity = incident.severity >= 4;
+                else if (severityFilter === 'Moderate') matchesSeverity = incident.severity === 3;
+                else if (severityFilter === 'Minor') matchesSeverity = incident.severity === 2;
                 else if (severityFilter === 'Low') matchesSeverity = incident.severity === 1;
             }
 
@@ -85,9 +86,10 @@ const AllRequests: React.FC = () => {
                                     onChange={(e) => setSeverityFilter(e.target.value)}
                                 >
                                     <option value="all">All Severities</option>
-                                    <option value="Critical">Critical (Lvl 4-5)</option>
-                                    <option value="High">High (Lvl 3)</option>
-                                    <option value="Moderate">Moderate (Lvl 2)</option>
+                                    <option value="Critical">Critical (Lvl 5)</option>
+                                    <option value="High">High (Lvl 4)</option>
+                                    <option value="Moderate">Moderate (Lvl 3)</option>
+                                    <option value="Minor">Minor (Lvl 2)</option>
                                     <option value="Low">Low (Lvl 1)</option>
                                 </select>
                                 <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 w-3 h-3 pointer-events-none" />

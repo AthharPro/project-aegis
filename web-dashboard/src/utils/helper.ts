@@ -1,10 +1,10 @@
 
 // 1. SEVERITY (Input - The Situation)
 export const getSeverityConfig = (severity: number) => {
-  // Assuming scale 1-5
-  if (severity >= 4) return { label: 'CRITICAL', color: 'text-red-500', bg: 'bg-red-500/20', border: 'border-red-500' };
-  if (severity === 3) return { label: 'HIGH', color: 'text-orange-500', bg: 'bg-orange-500/20', border: 'border-orange-500' };
-  if (severity === 2) return { label: 'MODERATE', color: 'text-yellow-500', bg: 'bg-yellow-500/20', border: 'border-yellow-500' };
+  if (severity >= 5) return { label: 'CRITICAL', color: 'text-red-500', bg: 'bg-red-500/20', border: 'border-red-500' };
+  if (severity === 4) return { label: 'HIGH', color: 'text-orange-400', bg: 'bg-orange-400/20', border: 'border-orange-400' };
+  if (severity === 3) return { label: 'MODERATE', color: 'text-yellow-500', bg: 'bg-yellow-500/20', border: 'border-yellow-500' };
+  if (severity === 2) return { label: 'MINOR', color: 'text-violet-500', bg: 'bg-violet-500/20', border: 'border-violet-500' };
   return { label: 'LOW', color: 'text-blue-500', bg: 'bg-blue-500/20', border: 'border-blue-500' };
 };
 
@@ -20,16 +20,16 @@ export const getStatusConfig = (status: string) => {
 
 export const formatTimestamp = (timestamp: string): string => {
   const date = new Date(timestamp);
-  
+
   // 1. Get the components in UTC
   const utcHours = date.getUTCHours();
   const utcMinutes = date.getUTCMinutes();
-  
+
   // 2. Reconstruct a string formatted for display
   const hours12 = utcHours % 12 || 12;
   const ampm = utcHours < 12 ? 'AM' : 'PM';
   const minutesPadded = String(utcMinutes).padStart(2, '0');
-  
+
   // Final display string
   return `${hours12}:${minutesPadded} ${ampm}`;
 };

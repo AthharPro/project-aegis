@@ -5,7 +5,7 @@ import L from 'leaflet';
 import type { Incident } from '../types';
 import { formatDistanceToNow } from 'date-fns';
 import { formatVictimCount } from '../utils/helper';
-//import { getSeverityConfig } from '../utils/helper';
+import { getSeverityConfig } from '../utils/helper';
 
 // --- Icon Factory ---
 const createIcon = (color: string) => new L.DivIcon({
@@ -17,15 +17,16 @@ const createIcon = (color: string) => new L.DivIcon({
 
 // Map Severity Levels to Hex Colors for Leaflet
 const getIconForSeverity = (severity: number) => {
-    if (severity >= 4) return createIcon('#ef4444'); // Red (Critical)
-    if (severity === 3) return createIcon('#f97316'); // Orange (High)
-    if (severity === 2) return createIcon('#eab308'); // Yellow (Moderate)
+    if (severity >= 5) return createIcon('#ef4444');
+    if (severity === 4) return createIcon('#f97316');
+    if (severity === 3) return createIcon('#eab308');
+    if (severity === 2) return createIcon('#8b5cf6');
     return createIcon('#10b981'); // Emerald (Low)
 };
 
 export const MapView: React.FC<{ incidents: Incident[] }> = ({ incidents }) => {
     // Default center (Colombo, Sri Lanka)
-    const defaultCenter: [number, number] = [6.9271, 79.8612];
+    const defaultCenter: [number, number] = [7.8731, 80.7718];
 
     // Calculate center based on first incident if available
     const center: [number, number] = incidents.length > 0
@@ -36,7 +37,7 @@ export const MapView: React.FC<{ incidents: Incident[] }> = ({ incidents }) => {
         <div className="h-full w-full rounded-lg overflow-hidden border border-slate-700 relative z-0">
             <MapContainer
                 center={center}
-                zoom={13}
+                zoom={8}
                 scrollWheelZoom={true}
                 style={{ height: '100%', width: '100%' }}
             >
@@ -46,8 +47,15 @@ export const MapView: React.FC<{ incidents: Incident[] }> = ({ incidents }) => {
                 />
 
                 {/* Render Markers */}
+                {/* Render Markers */}
                 {incidents.map((incident) => {
-                    //const config = getSeverityConfig(incident.severity);
+                    // 1. Get the full config object
+                    const config = getSeverityConfig(incident.severity);
+
+                    // Helper to map Tailwind color names to background classes
+                    // Example: 'text-red-500' -> 'bg-red-500'
+                    const bgColorClass = config.color.replace('text-', 'bg-').replace('-400', '-500');
+
 
                     return (
                         <Marker
@@ -60,11 +68,10 @@ export const MapView: React.FC<{ incidents: Incident[] }> = ({ incidents }) => {
                                     {/* Header */}
                                     <div className="flex justify-between items-start mb-1">
                                         <strong className="block text-sm font-bold uppercase">{incident.incident_type}</strong>
-                                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded text-white ${incident.severity >= 4 ? 'bg-red-500' :
-                                                incident.severity === 3 ? 'bg-orange-500' :
-                                                    incident.severity === 2 ? 'bg-yellow-500' : 'bg-emerald-500'
-                                            }`}>
-                                            LVL {incident.severity}
+
+                                        {/* 2. RENDER THE WORD LABEL and use the derived class */}
+                                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded text-white ${bgColorClass}`}>
+                                            {config.label} {/* <-- SHOWS THE WORD (CRITICAL, HIGH, etc.) */}
                                         </span>
                                     </div>
 
@@ -79,8 +86,9 @@ export const MapView: React.FC<{ incidents: Incident[] }> = ({ incidents }) => {
 
                                     {/* Footer */}
                                     <div className="border-t border-slate-200 pt-1 mt-1 flex justify-between items-center text-[10px] text-slate-500">
-                                        <span>{incident.profiles?.full_name || 'Unknown Officer'}</span>
-                                        <span>{formatDistanceToNow(new Date(incident.incident_time), { addSuffix: true })}</span>
+                                        <span>
+                                            Reported {formatDistanceToNow(new Date(incident.incident_time), { addSuffix: true })}
+                                        </span>
                                     </div>
                                 </div>
                             </Popup>

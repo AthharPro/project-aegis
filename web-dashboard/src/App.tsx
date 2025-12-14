@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard';
 import AllRequests from './pages/AllRequests';
 import Dispatchers from './pages/Dispatchers';
 import CompletedRequests from './pages/CompletedRequests';
+import FullMap from './pages/FullMap';
 import Login from './pages/Login';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
@@ -52,10 +53,11 @@ function App() {
           <Route path="requests" element={<AllRequests />} />
           <Route path="completed-requests" element={<CompletedRequests />} />
           <Route path="dispatchers" element={<Dispatchers />} />
+          <Route path="mission-command" element={<FullMap />} />
 
           {/* Placeholders */}
           <Route path="map" element={<div className="p-8 text-slate-500">Map Full View (Coming Soon)</div>} />
-          {/* <Route path="settings" element={<div className="p-8 text-slate-500">System Settings (Coming Soon)</div>} /> */}
+
         </Route>
 
       </Routes>
