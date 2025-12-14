@@ -11,6 +11,7 @@ class SummaryPage extends StatelessWidget {
   final VoidCallback onEditType;
   final VoidCallback onEditSeverity;
   final VoidCallback onEditVictimCount;
+  final VoidCallback onCancel;
 
   const SummaryPage({
     super.key,
@@ -23,6 +24,7 @@ class SummaryPage extends StatelessWidget {
     required this.onEditType,
     required this.onEditSeverity,
     required this.onEditVictimCount,
+    required this.onCancel,
   });
 
   @override
@@ -42,7 +44,7 @@ class SummaryPage extends StatelessWidget {
           Text(
             'Please review your incident report',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Colors.grey[600],
+                  color: Colors.green[600],
                 ),
           ),
           const SizedBox(height: 16),
@@ -85,6 +87,10 @@ class SummaryPage extends StatelessWidget {
             height: 56,
             child: ElevatedButton(
               onPressed: isLoading ? null : onSubmit,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+              ),
               child: isLoading
                   ? const SizedBox(
                       height: 24,
@@ -95,6 +101,21 @@ class SummaryPage extends StatelessWidget {
                       ),
                     )
                   : const Text('SUBMIT REPORT'),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+          
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: OutlinedButton(
+              onPressed: onCancel,
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                side: BorderSide(color: Theme.of(context).primaryColor),
+              ),
+              child: const Text('CANCEL'),
             ),
           ),
 
@@ -209,7 +230,7 @@ class SummaryPage extends StatelessWidget {
       case 3:
         return 'Moderate';
       case 4:
-        return 'Severe';
+        return 'High';
       case 5:
         return 'Critical';
       default:
