@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Pagination, ConfigProvider, theme } from 'antd';
-import { Search, Filter, MapPin, User, AlertCircle, Clock, Check, X } from 'lucide-react';
+import { Search, Filter, MapPin, User, AlertCircle, Clock, Check, X, Camera, XCircle, Image as ImageIcon } from 'lucide-react';
 import { useIncidentsPaginated } from '../hooks/UseIncidentsPaginated';
 import { getSeverityConfig, getStatusConfig, formatTimestamp, formatVictimCount } from '../utils/helper';
 import type { Incident } from '../types';
+import { IncidentModal } from '../components/IncidentModel';
 
 const AllRequests: React.FC = () => {
   // --- Filter & Pagination States ---
@@ -11,6 +12,10 @@ const AllRequests: React.FC = () => {
   const [severityFilter, setSeverityFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
+
+  // --- NEW: State for the Popup Modal ---
+  const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
+
   const pageSize = 8;
 
   const { incidents, total, isLoading, updateStatus } = useIncidentsPaginated({
@@ -20,17 +25,21 @@ const AllRequests: React.FC = () => {
     severityFilter,
   });
 
-  // --- NEW: Handle the 2-step Resolution Process ---
+  // Handle Resolution (Reused for both Row and Modal)
   const handleResolve = (id: string) => {
     updateStatus(id, 'RESOLVED');
     setConfirmingId(null);
+    if (selectedIncident?.id === id) {
+      // Close modal if resolving from within modal
+      setSelectedIncident(null);
+    }
     setTimeout(() => {
       updateStatus(id, 'COMPLETED');
-    }, 2000); // 5,000 milliseconds = 5 seconds
+    }, 2000);
   };
 
-  // Reset to first page when filters/search change
-  React.useEffect(() => {
+  // Reset page on filter change
+  useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, severityFilter]);
 
@@ -39,9 +48,9 @@ const AllRequests: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
+    <div className="flex h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans relative">
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header (unchanged) */}
+        {/* Header */}
         <div className="bg-slate-900 border-b border-slate-800 px-6 py-4 flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Mission Logs</h1>
@@ -53,9 +62,8 @@ const AllRequests: React.FC = () => {
         </div>
 
         <div className="flex-1 overflow-auto p-6 space-y-6">
-
+          {/* Filters Bar */}
           <div className="bg-slate-900/50 border border-slate-800 p-4 rounded-lg flex flex-col md:flex-row gap-4 items-center justify-between backdrop-blur-sm">
-            {/* Left: Search */}
             <div className="relative w-full md:w-96">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
               <input
@@ -66,8 +74,6 @@ const AllRequests: React.FC = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-
-            {/* Right: Dropdowns */}
             <div className="flex gap-4 w-full md:w-auto">
               <div className="relative">
                 <select
@@ -86,19 +92,18 @@ const AllRequests: React.FC = () => {
               </div>
             </div>
           </div>
-          {/* --- TABLE CONTENT --- */}
+
+          {/* Table Content */}
           <div className="bg-slate-900/50 border border-slate-800 rounded-lg overflow-hidden flex flex-col min-h-[600px]">
-            {/* Table Header: TOTAL 12 COLUMNS */}
             <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-800 bg-slate-900/80 text-xs font-bold text-slate-500 uppercase tracking-wider">
-              <div className="col-span-3">Incident Type</div>       {/* 3 */}
-              <div className="col-span-1">Severity</div>          {/* 1 */}
-              <div className="col-span-2">HQ Status</div>           {/* 2 */}
-              <div className="col-span-3">Location</div>            {/* 3 */}
-              <div className="col-span-1 text-center">Victims</div> {/* 1 */}
-              <div className="col-span-2 text-right">Responder / Time</div> {/* 2 */}
+              <div className="col-span-3">Incident Type</div>
+              <div className="col-span-1">Severity</div>
+              <div className="col-span-2">HQ Status</div>
+              <div className="col-span-3">Location</div>
+              <div className="col-span-1 text-center">Victims</div>
+              <div className="col-span-2 text-right">Responder / Time</div>
             </div>
 
-            {/* Table Rows */}
             <div className="flex-1">
               {isLoading ? (
                 <div className="p-8 text-center text-slate-500">Loading records...</div>
@@ -112,70 +117,60 @@ const AllRequests: React.FC = () => {
                   return (
                     <div
                       key={incident.id}
-                      className="grid grid-cols-12 gap-4 p-4 border-b border-slate-800/50 hover:bg-slate-800/50 transition-colors items-center text-sm group"
+                      onClick={() => setSelectedIncident(incident)} // <--- OPEN POPUP ON CLICK
+                      className="grid grid-cols-12 gap-4 p-4 border-b border-slate-800/50 hover:bg-slate-800 transition-colors items-center text-sm group cursor-pointer"
                     >
-                      {/* Incident Type (col-span-3) */}
+                      {/* ... (Columns same as before) ... */}
                       <div className="col-span-3 font-medium text-slate-200 flex items-center gap-3">
+                        {/* Severity Dot */}
                         <div className={`w-2 h-2 rounded-full ${severityConfig.bg.replace('/20', '')} shadow-[0_0_8px_rgba(255,255,255,0.2)]`}></div>
-                        <div className="flex flex-col">
+
+                        <div className="flex items-center gap-2">
                           <span>{incident.incident_type}</span>
+
+                          {/* IMAGE INDICATOR ICON */}
+                          {incident.image_url && (
+                            <div className="flex items-center justify-center w-4 h-4 rounded bg-slate-800 border border-slate-700 text-slate-400" title="Evidence Image Available">
+                              <ImageIcon size={10} />
+                            </div>
+                          )}
                         </div>
                       </div>
 
-                      {/* Severity Badge (col-span-1) */}
                       <div className="col-span-1">
                         <span className={`px-2 py-1 rounded border text-[10px] font-bold ${severityConfig.color} ${severityConfig.bg} ${severityConfig.border}`}>
                           {severityConfig.label}
                         </span>
                       </div>
 
-                      {/* Status Badge & Action Button (col-span-2) */}
                       <div className="col-span-2">
                         <div className="flex flex-row gap-2 items-center">
-                          {/* Status Badge */}
                           <span className={`flex items-center gap-1.5 w-fit px-2 py-1 rounded text-[10px] font-bold ${statusConfig.color} ${statusConfig.bg}`}>
                             {incident.status === 'PENDING' && <AlertCircle size={10} />}
                             {statusConfig.label.toUpperCase()}
                           </span>
 
-                          {/* Action Button Logic */}
+                          {/* Action Button (Prevent Bubble Up) */}
                           {confirmingId === incident.id ? (
-                            // --- CONFIRMATION STATE (YES/NO BUTTONS) ---
                             <div className="flex items-center gap-2">
-                              {/* CONFIRM Button */}
                               <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleResolve(incident.id);
-                                }}
+                                onClick={(e) => { e.stopPropagation(); handleResolve(incident.id); }}
                                 className="w-8 h-8 p-1 rounded-sm bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-sm flex items-center justify-center"
                               >
                                 <Check size={14} />
                               </button>
-
-                              {/* CANCEL Button */}
                               <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setConfirmingId(null);
-                                }}
+                                onClick={(e) => { e.stopPropagation(); setConfirmingId(null); }}
                                 className="w-8 h-8 p-1 rounded-sm bg-red-600 hover:bg-red-700 text-white transition-colors shadow-sm flex items-center justify-center"
                               >
                                 <X size={14} />
                               </button>
                             </div>
-
                           ) : incident.status.toUpperCase() === 'RESOLVED' ? (
-                            // Show nothing/space while the timer runs
                             <div className="w-12 h-8"></div>
-
                           ) : (
-                            // --- INITIAL Active State ---
                             <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setConfirmingId(incident.id);
-                              }}
+                              onClick={(e) => { e.stopPropagation(); setConfirmingId(incident.id); }}
                               className="flex items-center gap-1.5 w-fit px-3 py-1.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-600 hover:bg-emerald-600 hover:text-white hover:border-emerald-500 transition-all shadow-sm"
                             >
                               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -185,20 +180,17 @@ const AllRequests: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Location (col-span-3) */}
                       <div className="col-span-3 text-slate-400 font-mono text-xs flex items-center gap-2">
                         <MapPin className="w-3 h-3 text-slate-600" />
                         {incident.latitude.toFixed(4)}, {incident.longitude.toFixed(4)}
                       </div>
 
-                      {/* Victim Count (col-span-1) */}
                       <div className="col-span-1 text-slate-400 font-mono text-xs flex justify-center items-center">
                         <span className="text-sm font-bold text-slate-300">
                           {formatVictimCount(incident.victim_count)}
                         </span>
                       </div>
 
-                      {/* Officer & Time (col-span-2) */}
                       <div className="col-span-2 text-right flex flex-col items-end gap-1">
                         <div className="text-slate-300 flex items-center gap-1.5" title={incident.user_id}>
                           <span className="w-[120px] truncate">{incident.profiles?.full_name || 'Unknown'}</span>
@@ -215,16 +207,11 @@ const AllRequests: React.FC = () => {
               )}
             </div>
 
-            {/* --- PAGINATION FOOTER --- */}
             <div className="p-4 border-t border-slate-800 bg-slate-900/50 flex justify-end">
               <ConfigProvider
                 theme={{
                   algorithm: theme.darkAlgorithm,
-                  token: {
-                    colorPrimary: '#ef4444',
-                    colorBgContainer: '#1e293b',
-                    colorBorder: '#334155',
-                  },
+                  token: { colorPrimary: '#ef4444', colorBgContainer: '#1e293b', colorBorder: '#334155' },
                 }}
               >
                 <Pagination
@@ -239,6 +226,14 @@ const AllRequests: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* --- INCIDENT DETAILS MODAL --- */}
+      <IncidentModal
+        incident={selectedIncident}
+        onClose={() => setSelectedIncident(null)}
+        onResolve={handleResolve}
+      />
+
     </div>
   );
 };
